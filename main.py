@@ -11,8 +11,8 @@ from bs4 import BeautifulSoup
 import re
 from joblib import Parallel, delayed
 
-
 dairy_url_list = []
+
 
 def diary_link_clawler(keyword):
     driver.get(keyword)
@@ -25,13 +25,19 @@ def diary_link_clawler(keyword):
 
 
 options = webdriver.ChromeOptions()
-# options.add_argument('--headless')
+options.add_argument('--headless')
+# options.add_argument('--proxy-server=http://proxy.std.hst.titech.ac.jp:10080  --proxy-auth=20043:tomo7024')
+# webdriver.DesiredCapabilities.CHROME['proxy'] = {
+#    "httpProxy": "http://20043:tomo7024@proxy.std.hst.titech.ac.jp:10080",
+#    "sslProxy": "http://20043:tomo7024@proxy.std.hst.titech.ac.jp:10080"
+# }
 driver = webdriver.Chrome(options=options)
+
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
-    pagenation_num = re.sub(r"\D", "", BeautifulSoup(driver.page_source.encode('utf-8'), 'html.parser').find('a', {
+    pagenation_num = re.sub(r'\D', "", BeautifulSoup(driver.page_source.encode('utf-8'), 'html.parser').find('a', {
         'data-uranus-component': 'paginationEnd'})['href'])
-    print("ページ数:"+pagenation_num)
+    print("ページ数:" + pagenation_num)
     for x in range(2, int(pagenation_num) + 1):
         diary_link_clawler("https://ameblo.jp/" + i + '/entrylist-' + str(x) + ".html")
 
