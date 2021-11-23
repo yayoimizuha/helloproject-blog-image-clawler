@@ -91,6 +91,9 @@ def download_image_link(url):
 
 
 time.sleep(3)
-for i in photo_url_list:
-    print("image url: " + i)
-    print(download_image_link(i))
+pprint(joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
+    joblib.delayed(download_image_link)(url) for url in photo_url_list))
+
+# for i in photo_url_list:
+#    print("image url: " + i)
+#    print(download_image_link(i))
