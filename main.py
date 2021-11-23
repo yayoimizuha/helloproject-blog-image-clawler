@@ -7,8 +7,8 @@ import joblib
 import urllib.request
 import itertools
 
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
-blog_list = ["angerme-new"]
+blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
+# blog_list = ["angerme-new"]
 
 dairy_url_list = []
 pagenation_links = []
@@ -40,7 +40,7 @@ for i in blog_list:
     # print(dairy_url_list)
     # time.sleep(5)
 
-print(dairy_url_list[1:100])
+print(dairy_url_list)
 
 # data-entry-id と data-image-id より、画像閲覧ページリンクを生成
 print("url list length: " + str(len(dairy_url_list)))
@@ -77,7 +77,7 @@ def search_image_by_diary(url):
 
 
 photo_url_list = [joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
-    joblib.delayed(search_image_by_diary)(url) for url in dairy_url_list[1:10])]
+    joblib.delayed(search_image_by_diary)(url) for url in dairy_url_list)]
 # photo_url_list = [x for x in photo_url_list if x]  # remove null element
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
