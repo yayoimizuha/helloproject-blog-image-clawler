@@ -60,8 +60,9 @@ def search_image_by_diary(url):
     # print(repr(photos))
     photo_url = []
 
-    hashtag = 'None'
     hashtag = str(re.search('"theme_name":".*?"', page)[0])
+    if hashtag == "":
+        hashtag = 'None'
     hashtag = hashtag[14:-1]
     print("hashtag: " + hashtag)
 
