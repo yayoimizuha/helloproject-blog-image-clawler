@@ -7,8 +7,8 @@ import joblib
 import urllib.request
 import itertools
 
-blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
-# blog_list = ["angerme-new"]
+# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
+blog_list = ["angerme-new"]
 
 dairy_url_list = []
 pagenation_links = []
@@ -28,8 +28,9 @@ def diary_link_clawler(keyword):
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
     pagenation_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
-                                                     'html.parser').find('a', {
-        'data-uranus-component': 'paginationEnd'})['href'])
+                                                     'html.parser').find('a',
+                                                                         {'data-uranus-component': 'paginationEnd'})[
+        'href'])
     print("ページ数:" + pagenation_num)
     for x in range(2, int(pagenation_num) + 1):
         pagenation_links.append("https://ameblo.jp/" + i + '/entrylist-' + str(x) + ".html")
@@ -48,8 +49,8 @@ print("url list length: " + str(len(dairy_url_list)))
 
 def search_image_by_diary(url):
     print("\n\tdairy_url: " + url)
-    main_text = BeautifulSoup(requests.get(url).text, 'html.parser').find('div',
-                                                                          {'data-uranus-component': 'entryBody'})
+    page = requests.get(url).text
+    main_text = BeautifulSoup(page, 'html.parser').find('div', {'data-uranus-component': 'entryBody'})
     # print("main_text: " + str(main_text))
 
     photos = BeautifulSoup(str(main_text), 'html.parser').find_all('img', class_='PhotoSwipeImage')
@@ -58,6 +59,11 @@ def search_image_by_diary(url):
     # print("photos: ")
     # print(repr(photos))
     photo_url = []
+
+    hashtag = 'None'
+    hashtag = str(re.search('"theme_name":".*?"', page)[0])
+    hashtag = hashtag[14:-1]
+    print("hashtag: " + hashtag)
 
     count = 0
     for images in photos:
@@ -69,7 +75,8 @@ def search_image_by_diary(url):
         photo_url.append(
             str(url).rsplit('/', 1)[0] + '/image-' + BeautifulSoup(str(images), 'html.parser').find('img')[
                 'data-entry-id'] +
-            '-' + BeautifulSoup(str(images), 'html.parser').find('img')['data-image-id'] + '.html')
+            '-' + BeautifulSoup(str(images), 'html.parser').find('img')['data-image-id'] + '.html' +
+            '#' + hashtag + '#')
 
     print("photo_url[" + str(int(len(photo_url))) + "]: ")
     pprint(photo_url)
