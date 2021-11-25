@@ -15,13 +15,17 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds"]
+# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+#             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+#             "beyooooonds-chicatetsu", "beyooooonds"]
+
+# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory"]
+blog_list = ["angerme-new"]
 
 dairy_url_list = []
 pagenation_links = []
 N_JOBS = 40
+sleep_time = [0]
 
 
 def diary_link_clawler(keyword):
@@ -37,7 +41,9 @@ def diary_link_clawler(keyword):
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
     pagination_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
-                                    'html.parser').find('a', {'data-uranus-component': 'paginationEnd'})['href'])
+                                                     'html.parser').find('a',
+                                                                         {'data-uranus-component': 'paginationEnd'})[
+        'href'])
 
     pagenation_links.clear()
     print("ページ数:" + pagination_num)
@@ -50,7 +56,7 @@ for i in blog_list:
     # print(dairy_url_list)
     # time.sleep(5)
 
-print(dairy_url_list)
+pprint.pprint(dairy_url_list)
 
 # data-entry-id と data-image-id より、画像閲覧ページリンクを生成
 print("url list length: " + str(len(dairy_url_list)))
@@ -127,7 +133,11 @@ def generate_download_image_file(photo_url):
                    blog_id + '-' + image_order + '.jpg', str(photo_url).split('#')[2])
 
 
-def download_image(base_url, url, filename, modified_date, ):
+def download_image(base_url, url, filename, modified_date):
+    global sleep_time
+    if sleep_time[0] % 5 == 0:
+        time.sleep(5)
+    sleep_time += 1
     print("\nphoto_page: " + base_url + "\ndirect_image_link: " + url + "\nfile name: " + filename)
     urllib.request.urlretrieve(url, filename)
     os.utime(path=filename,
