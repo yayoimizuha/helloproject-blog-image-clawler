@@ -49,8 +49,9 @@ print(dairy_url_list)
 print("url list length: " + str(len(dairy_url_list)))
 json_pretty_printer = pprint.PrettyPrinter(indent=4)
 
+
 def search_image_by_diary(url):
-    print("\n\tdairy_url: " + url)
+    # print("\n\tdairy_url: " + url)
     page = requests.get(url).text
     main_text = BeautifulSoup(page, 'html.parser').find('div', {'data-uranus-component': 'entryBody'})
     # print("main_text: " + str(main_text))
@@ -66,7 +67,7 @@ def search_image_by_diary(url):
     if hashtag == "":
         hashtag = 'None'
     hashtag = hashtag[14:-1]
-    print("hashtag: " + hashtag)
+    # print("hashtag: " + hashtag)
     iso_date = str(re.search('"dateModified":".*?"', page)[0])[16:-1]
     count = 0
     for images in photos:
@@ -100,8 +101,10 @@ def download_image_link(url):
 
 
 time.sleep(3)
-pprint.pprint(joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
-    joblib.delayed(download_image_link)(url) for url in photo_url_list))
+image_direct_link = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
+    joblib.delayed(download_image_link)(url) for url in photo_url_list)
+
+pprint.pprint(image_direct_link)
 
 
 def download_image(url, filename, modified_date):
@@ -110,9 +113,9 @@ def download_image(url, filename, modified_date):
              times=(os.stat(path=filename).st_atime, datetime.datetime.fromisoformat(modified_date).timestamp()))
 
 
-for i in photo_url_list:
+for i in image_direct_link:
     print("image url: " + str(i).split('#')[0])
-    print("image direct url: " + download_image_link(i))
+    print("image direct url: " + i)
 
     download_image(str(i).split('#')[0],
                    str(i).split('#')[1] + '=' + str(i).split('#')[0].split('/')[-2] + '=' + re.sub(r'\D', "",
