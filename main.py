@@ -15,8 +15,9 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
-blog_list = ["angerme-new"]
+blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+             "beyooooonds-chicatetsu", "beyooooonds"]
 
 dairy_url_list = []
 pagenation_links = []
@@ -57,16 +58,13 @@ json_pretty_printer = pprint.PrettyPrinter(indent=4)
 
 
 def search_image_by_diary(url):
-    # print("\n\tdairy_url: " + url)
     page = requests.get(url).text
     main_text = BeautifulSoup(page, 'html.parser').find('div', {'data-uranus-component': 'entryBody'})
-    # print("main_text: " + str(main_text))
 
     photos = BeautifulSoup(str(main_text), 'html.parser').find_all('img', class_='PhotoSwipeImage')
     if photos is None:
         return None
-    # print("photos: ")
-    # print(repr(photos))
+
     photo_url = []
 
     hashtag = str(re.search('"theme_name":".*?"', page)[0])
@@ -95,7 +93,7 @@ def search_image_by_diary(url):
 
 photo_url_list = [joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
     joblib.delayed(search_image_by_diary)(url) for url in dairy_url_list)]
-# photo_url_list = [x for x in photo_url_list if x]  # remove null element
+photo_url_list = [x for x in photo_url_list if x]  # remove null element
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
 
@@ -118,18 +116,19 @@ time.sleep(3)
 
 def generate_download_image_file(photo_url):
     link = download_image_link(photo_url)
-    print("image url: " + str(photo_url).split('#')[0] + '\n' + "image direct url: " + link)
     image_order = str(photo_url).split('#')[3]
     if image_order is None:
         image_order = str(1)
+    blog_id = str(re.search(".*?image-(\d+)-.*?", str(photo_url)).group(1))
+    if blog_id is None:
+        blog_id = "no_blog_id"
+    download_image(photo_url, link,
+                   str(photo_url).split('#')[1] + '=' + str(photo_url).split('#')[0].split('/')[-2] + '=' +
+                   blog_id + '-' + image_order + '.jpg', str(photo_url).split('#')[2])
 
-    download_image(link,
-                   str(photo_url).split('#')[1] + '=' + str(photo_url).split('#')[0].split('/')[-2] + '=' + str(
-                       re.search('images-.*?-', str(photo_url).split('#')[0])[0]) + '-' + image_order + '.jpg',
-                   str(photo_url).split('#')[2])
 
-
-def download_image(url, filename, modified_date):
+def download_image(base_url, url, filename, modified_date, ):
+    print("\nphoto_page: " + base_url + "\ndirect_image_link: " + url + "\nfile name: " + filename)
     urllib.request.urlretrieve(url, filename)
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime, datetime.datetime.fromisoformat(modified_date).timestamp()))
