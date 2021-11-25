@@ -15,17 +15,13 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-#             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-#             "beyooooonds-chicatetsu", "beyooooonds"]
-
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory"]
-blog_list = ["angerme-new"]
+blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+             "beyooooonds-chicatetsu", "beyooooonds"]
 
 dairy_url_list = []
 pagenation_links = []
 N_JOBS = 40
-sleep_time = [0]
 
 
 def diary_link_clawler(keyword):
@@ -134,10 +130,7 @@ def generate_download_image_file(photo_url):
 
 
 def download_image(base_url, url, filename, modified_date):
-    global sleep_time
-    if sleep_time[0] % 5 == 0:
-        time.sleep(5)
-    sleep_time += 1
+    time.sleep(3)
     print("\nphoto_page: " + base_url + "\ndirect_image_link: " + url + "\nfile name: " + filename)
     urllib.request.urlretrieve(url, filename)
     os.utime(path=filename,
