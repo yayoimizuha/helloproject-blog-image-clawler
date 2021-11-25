@@ -15,10 +15,11 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds"]
+# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+#             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+#             "beyooooonds-chicatetsu", "beyooooonds"]
 
+blog_list = ["morningm-13ki"]
 dairy_url_list = []
 pagenation_links = []
 N_JOBS = 40
@@ -36,13 +37,13 @@ def diary_link_clawler(keyword):
 
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
-    pagination_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
-                                                     'html.parser').find('a',
-                                                                         {'data-uranus-component': 'paginationEnd'})[
-        'href'])
+    pagination_num = int(
+        re.search('entrylist-(.*?).html',
+                  BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text, 'html.parser').find(
+                      'a', {'data-uranus-component': 'paginationEnd'})['href']).group(1))
 
     pagenation_links.clear()
-    print("ページ数:" + pagination_num)
+    print("ページ数:" + str(pagination_num))
     for x in range(2, int(pagination_num) + 1):
         pagenation_links.append("https://ameblo.jp/" + i + '/entrylist-' + str(x) + ".html")
 
