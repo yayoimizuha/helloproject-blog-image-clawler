@@ -36,12 +36,13 @@ def diary_link_clawler(keyword):
 
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
-    pagenation_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
+    pagination_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
                                                      'html.parser').find('a',
                                                                          {'data-uranus-component': 'paginationEnd'})[
         'href'])
-    print("ページ数:" + pagenation_num)
-    for x in range(2, int(pagenation_num) + 1):
+    pagenation_links.clear()
+    print("ページ数:" + pagination_num)
+    for x in range(2, int(pagination_num) + 1):
         pagenation_links.append("https://ameblo.jp/" + i + '/entrylist-' + str(x) + ".html")
 
     _ = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
