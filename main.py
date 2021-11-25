@@ -8,6 +8,12 @@ import urllib.request
 import itertools
 import datetime
 import os
+import ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new"]
 blog_list = ["angerme-new"]
@@ -82,7 +88,7 @@ def search_image_by_diary(url):
             '-' + BeautifulSoup(str(images), 'html.parser').find('img')['data-image-id'] + '.html' +
             '#' + hashtag + '#' + str(iso_date))
 
-    print("photo_url[" + str(int(len(photo_url))) + "]: \n" + json_pretty_printer.pformat(photo_url))
+    print("photo_url[" + str(int(len(photo_url))) + "]: \n" + json_pretty_printer.pformat(photo_url) + '\n')
     return photo_url
 
 
@@ -101,10 +107,12 @@ def download_image_link(url):
 
 
 time.sleep(3)
-image_direct_link = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
-    joblib.delayed(download_image_link)(url) for url in photo_url_list)
 
-pprint.pprint(image_direct_link)
+
+# image_direct_link = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
+#     joblib.delayed(download_image_link)(url) for url in photo_url_list)
+
+# pprint.pprint(image_direct_link)
 
 
 def download_image(url, filename, modified_date):
@@ -113,11 +121,11 @@ def download_image(url, filename, modified_date):
              times=(os.stat(path=filename).st_atime, datetime.datetime.fromisoformat(modified_date).timestamp()))
 
 
-for i in image_direct_link:
-    print("image url: " + str(i).split('#')[0])
-    print("image direct url: " + i)
+for i in photo_url_list:
+    link = download_image_link(i)
+    print("image url: " + str(i).split('#')[0] + '\n' + "image direct url: " + link)
 
-    download_image(str(i).split('#')[0],
+    download_image(link,
                    str(i).split('#')[1] + '=' + str(i).split('#')[0].split('/')[-2] + '=' + re.sub(r'\D', "",
                                                                                                    str(i).split('#')[
                                                                                                        0]) + '.jpg',
