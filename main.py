@@ -1,5 +1,5 @@
 import time
-from pprint import pprint
+import pprint
 from bs4 import BeautifulSoup
 import re
 import requests
@@ -47,7 +47,7 @@ print(dairy_url_list)
 
 # data-entry-id と data-image-id より、画像閲覧ページリンクを生成
 print("url list length: " + str(len(dairy_url_list)))
-
+json_pretty_printer = pprint.PrettyPrinter(indent=4)
 
 def search_image_by_diary(url):
     print("\n\tdairy_url: " + url)
@@ -81,8 +81,7 @@ def search_image_by_diary(url):
             '-' + BeautifulSoup(str(images), 'html.parser').find('img')['data-image-id'] + '.html' +
             '#' + hashtag + '#' + str(iso_date))
 
-    print("photo_url[" + str(int(len(photo_url))) + "]: ")
-    pprint(photo_url)
+    print("photo_url[" + str(int(len(photo_url))) + "]: \n" + json_pretty_printer.pformat(photo_url))
     return photo_url
 
 
@@ -92,7 +91,7 @@ photo_url_list = [joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
 photo_url_list = list(itertools.chain.from_iterable(photo_url_list))
 
-pprint(photo_url_list)
+pprint.pprint(photo_url_list)
 
 
 def download_image_link(url):
@@ -101,7 +100,7 @@ def download_image_link(url):
 
 
 time.sleep(3)
-pprint(joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
+pprint.pprint(joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
     joblib.delayed(download_image_link)(url) for url in photo_url_list))
 
 
