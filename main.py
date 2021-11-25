@@ -37,9 +37,8 @@ def diary_link_clawler(keyword):
 for i in blog_list:
     diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
     pagination_num = re.sub(r'\D', "", BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text,
-                                                     'html.parser').find('a',
-                                                                         {'data-uranus-component': 'paginationEnd'})[
-        'href'])
+                                    'html.parser').find('a', {'data-uranus-component': 'paginationEnd'})['href'])
+
     pagenation_links.clear()
     print("ページ数:" + pagination_num)
     for x in range(2, int(pagination_num) + 1):
