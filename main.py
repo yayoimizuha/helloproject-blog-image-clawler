@@ -15,11 +15,10 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-#             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-#             "beyooooonds-chicatetsu", "beyooooonds"]
+blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+             "beyooooonds-chicatetsu", "beyooooonds"]
 
-blog_list = ["morningm-13ki"]
 dairy_url_list = []
 pagenation_links = []
 N_JOBS = 40
