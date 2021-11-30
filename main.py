@@ -15,16 +15,18 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
-blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds"]
+# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
+#              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+#              "beyooooonds-chicatetsu", "beyooooonds"]
+
+blog_list = ["tsubaki-factory"]
 
 dairy_url_list = []
 pagenation_links = []
 N_JOBS = 40
 
 
-def diary_link_clawler(keyword):
+def diary_link_crawler(keyword):
     print(" Processing: " + keyword)
     dairy_list = BeautifulSoup(requests.get(keyword).text, 'html.parser')
     dairy_list = dairy_list.find('ul', {'class': 'skin-archiveList'})
@@ -35,7 +37,7 @@ def diary_link_clawler(keyword):
 
 
 for i in blog_list:
-    diary_link_clawler("https://ameblo.jp/" + i + "/entrylist.html")
+    diary_link_crawler("https://ameblo.jp/" + i + "/entrylist.html")
     pagination_num = int(
         re.search('entrylist-(.*?).html',
                   BeautifulSoup(requests.get("https://ameblo.jp/" + i + "/entrylist.html").text, 'html.parser').find(
@@ -47,7 +49,7 @@ for i in blog_list:
         pagenation_links.append("https://ameblo.jp/" + i + '/entrylist-' + str(x) + ".html")
 
     _ = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
-        joblib.delayed(diary_link_clawler)(keyword) for keyword in pagenation_links)
+        joblib.delayed(diary_link_crawler)(keyword) for keyword in pagenation_links)
 
     # print(dairy_url_list)
     # time.sleep(5)
