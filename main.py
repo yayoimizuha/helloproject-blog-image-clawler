@@ -25,7 +25,7 @@ N_JOBS = 40
 
 
 def diary_link_clawler(keyword):
-    print(" Processing: " + keyword)
+    print("\tProcessing: " + keyword)
     dairy_list = BeautifulSoup(requests.get(keyword).text, 'html.parser')
     dairy_list = dairy_list.find('ul', {'class': 'skin-archiveList'})
 
