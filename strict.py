@@ -23,22 +23,29 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
 
 
 def safe_request_get_as_text(url):
+    text = ""
     get_error = 0
     while get_error == 0:
         try:
             text = requests.get(url).text
             get_error += 1
         except BaseException as error:
-            print("\n\n\n\n\n\n" + "Error occurred: " + str(error) + "\n\n\n\n\n\n")
+            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
             get_error = 0
         if get_error > 5:
             continue
 
+    return text
+
 
 def inspect_entry_list(url):
     print(" Processing: " + url)
-    return BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
+    item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
         .find_all('h2', {'data-uranus-component': 'entryItemTitle'})
+    hrefs = []
+    for tag in item_tags:
+        hrefs.append("https://ameblo.jp" + BeautifulSoup(str(tag), 'html.parser').find('a')['href'])
+    return hrefs
 
 
 def diary_link_crawler(keyword):
@@ -64,8 +71,10 @@ def diary_link_crawler(keyword):
     dairy_url_list = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
         joblib.delayed(inspect_entry_list)(keyword) for keyword in pagination_links)
 
+    pprint.pprint(dairy_url_list)
+    # time.sleep(1600)
     # Return url array.(formatted)
-    return itertools.chain.from_iterable(itertools.chain.from_iterable(dairy_url_list))
+    return itertools.chain.from_iterable(dairy_url_list)
 
 
 def image_detector(url):
@@ -113,6 +122,8 @@ def image_downloader(image_link):
     direct_image_link = BeautifulSoup(safe_request_get_as_text(image_link), 'html.parser') \
         .find('main').find('img', {'aria-hidden': 'false'})['src']
 
+    print("direct_image_link: " + direct_image_link)
+
     filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id \
                + '-' + image_order + '.jpg'
     download_status = 0
@@ -121,17 +132,18 @@ def image_downloader(image_link):
             urllib.request.urlretrieve(direct_image_link, filename)
             download_status += 1
         except BaseException as error:
-            print("\n\n\n\n\n\n" + "Error occurred: " + str(error) + "\n\n\n\n\n\n")
+            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
         if download_status > 5:
             continue
 
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime,
                     datetime.datetime.fromisoformat(str(image_link).split('#')[2]).timestamp()))
+    return 0
 
 
 for i in blog_list:
     for j in diary_link_crawler(i):
-        for k in image_detector(j):
-            image_downloader(k)
-            time.sleep(3)
+        _ = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
+            joblib.delayed(image_downloader)(url) for url in image_detector(j))
+        # time.sleep(300)
