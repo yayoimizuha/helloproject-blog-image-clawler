@@ -146,4 +146,4 @@ for i in blog_list:
     for j in diary_link_crawler(i):
         _ = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
             joblib.delayed(image_downloader)(url) for url in image_detector(j))
-        # time.sleep(300)
+    time.sleep(300)
