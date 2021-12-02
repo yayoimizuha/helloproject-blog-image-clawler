@@ -101,7 +101,7 @@ def image_detector(url):
         if count % 2 == 0:
             continue
         bs4_img = BeautifulSoup(str(images), 'html.parser').find('img')
-        if int(bs4_img['width']) < 30:
+        if int(float(bs4_img['width'])) < 30:
             continue
 
         image_url.append(
