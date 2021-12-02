@@ -100,12 +100,13 @@ def image_detector(url):
         count += 1
         if count % 2 == 0:
             continue
+        bs4_img = BeautifulSoup(str(images), 'html.parser').find('img')
+        if int(bs4_img['width']) < 30:
+            continue
 
         image_url.append(
-            str(url).rsplit('/', 1)[0] + '/image-' + BeautifulSoup(str(images), 'html.parser')
-            .find('img')['data-entry-id'] + '-' + BeautifulSoup(str(images), 'html.parser').find('img')['data-image-id']
-            + '.html' + '#' + hashtag + '#' + str(iso_date) + '#' + BeautifulSoup(str(images), 'html.parser')
-            .find('img')['data-image-order'])
+            str(url).rsplit('/', 1)[0] + '/image-' + bs4_img['data-entry-id'] + '-' + bs4_img['data-image-id']
+            + '.html' + '#' + hashtag + '#' + str(iso_date) + '#' + bs4_img['data-image-order'])
 
     print("image_url[" + str(int(len(image_url))) + "]: \n" + pprint.PrettyPrinter(indent=4).pformat(image_url) + '\n')
     sys.stderr.flush()
