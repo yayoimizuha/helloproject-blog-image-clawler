@@ -1,3 +1,4 @@
+import sys
 import time
 import pprint
 from bs4 import BeautifulSoup
@@ -31,6 +32,8 @@ def safe_request_get_as_text(url):
             get_error += 1
         except BaseException as error:
             print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            sys.stderr.flush()
+            sys.stdout.flush()
             get_error = 0
         if get_error > 5:
             continue
@@ -40,6 +43,8 @@ def safe_request_get_as_text(url):
 
 def inspect_entry_list(url):
     print(" Processing: " + url)
+    sys.stderr.flush()
+    sys.stdout.flush()
     item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
         .find_all('h2', {'data-uranus-component': 'entryItemTitle'})
     hrefs = []
@@ -57,7 +62,8 @@ def diary_link_crawler(keyword):
                   BeautifulSoup(safe_request_get_as_text("https://ameblo.jp/" + keyword + "/entrylist.html"),
                                 'html.parser').find('a', {'data-uranus-component': 'paginationEnd'})['href']).group(1))
     print("ページ数:" + str(pagination_num))
-
+    sys.stderr.flush()
+    sys.stdout.flush()
     # Extract 1st page.
     dairy_url_list.append(inspect_entry_list("https://ameblo.jp/" + keyword + "/entrylist.html"))
 
@@ -102,6 +108,8 @@ def image_detector(url):
             .find('img')['data-image-order'])
 
     print("image_url[" + str(int(len(image_url))) + "]: \n" + pprint.PrettyPrinter(indent=4).pformat(image_url) + '\n')
+    sys.stderr.flush()
+    sys.stdout.flush()
     return image_url
 
 
@@ -123,6 +131,8 @@ def image_downloader(image_link):
         .find('main').find('img', {'aria-hidden': 'false'})['src']
 
     print("direct_image_link: " + direct_image_link)
+    sys.stderr.flush()
+    sys.stdout.flush()
 
     filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id \
                + '-' + image_order + '.jpg'
@@ -133,6 +143,8 @@ def image_downloader(image_link):
             download_status += 1
         except BaseException as error:
             print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            sys.stderr.flush()
+            sys.stdout.flush()
         if download_status > 5:
             continue
 
