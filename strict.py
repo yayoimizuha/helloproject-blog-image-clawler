@@ -158,7 +158,7 @@ def image_downloader(image_link):
 def sub_routine(id):
     for k in image_detector(id):
         image_downloader(k)
-
+    # https://ameblo.jp/juicejuice-official/entry-12527683506.html でエラーが出る。(写真集へのリンクが悪さしてる)
 
 for i in blog_list:
     _ = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
