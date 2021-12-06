@@ -35,7 +35,7 @@ def safe_request_get_as_text(url):
             text = requests.get(url).text
             get_error += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             get_error = 0
@@ -141,7 +141,7 @@ def image_downloader(image_link):
                     .find('img', {'aria-hidden': 'false'})['src']
             get_error += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(2) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             get_error = 0
@@ -160,7 +160,7 @@ def image_downloader(image_link):
             urllib.request.urlretrieve(direct_image_link, filename)
             download_status += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(3) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
         if download_status > 5:
