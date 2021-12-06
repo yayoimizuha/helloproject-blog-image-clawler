@@ -18,11 +18,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 N_JOBS = 40
 
-# blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
-#             "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-#             "beyooooonds-chicatetsu", "beyooooonds"]
-
-blog_list = ["juicejuice-official", "tsubaki-factory",
+blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds"]
 
