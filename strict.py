@@ -152,6 +152,7 @@ def image_downloader(image_link):
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime,
                     datetime.datetime.fromisoformat(str(image_link).split('#')[2]).timestamp()))
+    # ダウンロードできなかったときの対処
     return 0
 
 
