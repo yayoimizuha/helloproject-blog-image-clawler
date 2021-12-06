@@ -145,7 +145,7 @@ def image_downloader(image_link):
             sys.stderr.flush()
             sys.stdout.flush()
             get_error = 0
-        if get_error > 5:
+        if get_error == 0:
             return 0
 
     print("direct_image_link: " + direct_image_link)
