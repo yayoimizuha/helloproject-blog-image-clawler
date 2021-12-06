@@ -31,7 +31,7 @@ def safe_request_get_as_text(url):
             text = requests.get(url).text
             get_error += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             get_error = 0
@@ -128,8 +128,21 @@ def image_downloader(image_link):
     if image_order is None:
         image_order = str(1)
 
-    direct_image_link = BeautifulSoup(safe_request_get_as_text(image_link), 'html.parser') \
-        .find('main').find('img', {'aria-hidden': 'false'})['src']
+    direct_image_link = ""
+    get_error = 0
+    while get_error == 0:
+        try:
+            direct_image_link = \
+                BeautifulSoup(safe_request_get_as_text(image_link), 'html.parser').find('main') \
+                    .find('img', {'aria-hidden': 'false'})['src']
+            get_error += 1
+        except BaseException as error:
+            print("\n\n\n" + "Error occurred:(2) " + str(error) + "\n\n\n")
+            sys.stderr.flush()
+            sys.stdout.flush()
+            get_error = 0
+        if get_error == 0:
+            return 0
 
     print("direct_image_link: " + direct_image_link)
     sys.stderr.flush()
@@ -143,7 +156,7 @@ def image_downloader(image_link):
             urllib.request.urlretrieve(direct_image_link, filename)
             download_status += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred: " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(3) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
         if download_status > 5:
