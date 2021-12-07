@@ -22,6 +22,10 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds"]
 
+blog_list.clear()
+blog_list = ["morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
+             "beyooooonds-chicatetsu", "beyooooonds"]
+
 
 def safe_request_get_as_text(url):
     text = ""
@@ -178,6 +182,7 @@ def sub_routine(id):
 for i in blog_list:
     _ = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
         joblib.delayed(sub_routine)(url) for url in diary_link_crawler(i))
+    time.sleep(300)
 
 # for i in blog_list:
 #    for j in diary_link_crawler(i):
