@@ -23,8 +23,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "beyooooonds-chicatetsu", "beyooooonds"]
 
 blog_list.clear()
-blog_list = ["morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds"]
+blog_list = ["morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro", "beyooooonds-chicatetsu", "beyooooonds"]
 
 
 def safe_request_get_as_text(url):
