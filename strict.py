@@ -18,6 +18,16 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 N_JOBS = 40
 
+exist_file = [f for f in os.listdir('.') if os.path.isfile(os.path.join(os.getcwd(), f))]
+# only image file
+exist_file = [f for f in exist_file if '.jpg' in f]
+downloaded_key = []
+for file_name in exist_file:
+    downloaded_key.append(int((file_name.split('=')[-1].split('-')[0])))
+downloaded_key = list(set(downloaded_key))
+# print(downloaded_key)
+time.sleep(1)
+
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds"]
@@ -43,7 +53,7 @@ def safe_request_get_as_text(url):
 
 
 def inspect_entry_list(url):
-    print(" Processing: " + url)
+    print("\nProcessing: " + url)
     sys.stderr.flush()
     sys.stdout.flush()
     item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
@@ -80,6 +90,12 @@ def diary_link_crawler(keyword):
     dairy_url_list = list(itertools.chain.from_iterable(dairy_url_list))
     dairy_url_list = [s for s in dairy_url_list if 'amember' not in s]
 
+    # delete existed photo
+    exist_file_url = []
+    for url_num in downloaded_key:
+        exist_file_url.append("https://ameblo.jp/" + keyword + "/entry-" + str(url_num) + ".html")
+    dairy_url_list = list(set(dairy_url_list)-set(exist_file_url))
+
     pprint.pprint(dairy_url_list)
     # time.sleep(1600)
     # Return url array.(formatted)
@@ -110,7 +126,8 @@ def image_detector(url):
         image_url.append(
             str(url).rsplit('/', 1)[0] + '/image-' + bs4_img['data-entry-id'] + '-' + bs4_img['data-image-id']
             + '.html' + '#' + hashtag + '#' + str(iso_date) + '#' + bs4_img['data-image-order'])
-
+    if int(len(image_url)) == 0:
+        return []
     print("image_url[" + str(int(len(image_url))) + "]: \n" + pprint.PrettyPrinter(indent=4).pformat(image_url) + '\n')
     sys.stderr.flush()
     sys.stdout.flush()
@@ -184,7 +201,7 @@ def sub_routine(id):
 for i in blog_list:
     _ = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
         joblib.delayed(sub_routine)(url) for url in diary_link_crawler(i))
-    time.sleep(300)
+    # time.sleep(300)
 
 # for i in blog_list:
 #    for j in diary_link_crawler(i):
