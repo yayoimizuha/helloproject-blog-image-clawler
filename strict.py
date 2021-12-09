@@ -25,6 +25,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
 
 def safe_request_get_as_text(url):
     text = ""
+    err_num = 0
     get_error = 0
     while get_error == 0:
         try:
@@ -34,8 +35,8 @@ def safe_request_get_as_text(url):
             print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
-            get_error = 0
-        if get_error > 5:
+            err_num += 1
+        if err_num > 5:
             continue
 
     return text
@@ -76,11 +77,13 @@ def diary_link_crawler(keyword):
     # Crawl pages as parallel
     dairy_url_list = joblib.Parallel(n_jobs=N_JOBS, backend="threading")(
         joblib.delayed(inspect_entry_list)(keyword) for keyword in pagination_links)
+    dairy_url_list = list(itertools.chain.from_iterable(dairy_url_list))
+    dairy_url_list = [s for s in dairy_url_list if 'amember' not in s]
 
     pprint.pprint(dairy_url_list)
     # time.sleep(1600)
     # Return url array.(formatted)
-    return itertools.chain.from_iterable(dairy_url_list)
+    return dairy_url_list
 
 
 def image_detector(url):
@@ -101,7 +104,7 @@ def image_detector(url):
         if count % 2 == 0:
             continue
         bs4_img = BeautifulSoup(str(images), 'html.parser').find('img')
-        if int(float(bs4_img['width'])) < 30:
+        if int(float(re.sub(r"[^\d.]", "", bs4_img['width']))) < 30:
             continue
 
         image_url.append(
@@ -129,6 +132,7 @@ def image_downloader(image_link):
         image_order = str(1)
 
     direct_image_link = ""
+    err_num = 0
     get_error = 0
     while get_error == 0:
         try:
@@ -140,8 +144,8 @@ def image_downloader(image_link):
             print("\n\n\n" + "Error occurred:(2) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
-            get_error = 0
-        if get_error == 0:
+            err_num += 1
+        if err_num > 5:
             return 0
 
     print("direct_image_link: " + direct_image_link)
@@ -150,6 +154,7 @@ def image_downloader(image_link):
 
     filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id \
                + '-' + image_order + '.jpg'
+    err_num = 0
     download_status = 0
     while download_status == 0:
         try:
@@ -159,8 +164,9 @@ def image_downloader(image_link):
             print("\n\n\n" + "Error occurred:(3) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
-        if download_status > 5:
-            continue
+            err_num += 1
+        if err_num > 5:
+            return 0
 
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime,
@@ -178,6 +184,7 @@ def sub_routine(id):
 for i in blog_list:
     _ = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
         joblib.delayed(sub_routine)(url) for url in diary_link_crawler(i))
+    time.sleep(300)
 
 # for i in blog_list:
 #    for j in diary_link_crawler(i):
