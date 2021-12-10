@@ -30,6 +30,7 @@ downloaded_key = list(set(downloaded_key))
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds"]
+# blog_list = ["juicejuice-official"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -38,11 +39,11 @@ request_header = {
 
 
 def safe_request_get_as_text(url):
-    text = ""
     err_num = 0
     get_error = 0
     while get_error == 0:
         try:
+            global text
             text = requests.get(url, headers=request_header).text
             get_error += 1
         except BaseException as error:
@@ -60,8 +61,8 @@ def inspect_entry_list(url):
     print(" Processing: " + url)
     sys.stderr.flush()
     sys.stdout.flush()
-    item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
-        .find_all('h2', {'data-uranus-component': 'entryItemTitle'})
+    item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {
+        'class': 'skin-archiveList'}).find_all('h2', {'data-uranus-component': 'entryItemTitle'})
     hrefs = []
     for tag in item_tags:
         hrefs.append("https://ameblo.jp" + BeautifulSoup(str(tag), 'html.parser').find('a')['href'])
@@ -80,11 +81,9 @@ def diary_link_crawler(keyword):
     sys.stderr.flush()
     sys.stdout.flush()
     # Extract 1st page.
-    dairy_url_list.append(inspect_entry_list("https://ameblo.jp/" + keyword + "/entrylist.html"))
 
     # Generating each page links
-    pagination_links = []
-    pagination_links.clear()
+    pagination_links = ["https://ameblo.jp/" + keyword + "/entrylist.html"]
     for x in range(2, int(pagination_num) + 1):
         pagination_links.append("https://ameblo.jp/" + keyword + '/entrylist-' + str(x) + ".html")
 
@@ -107,10 +106,23 @@ def diary_link_crawler(keyword):
 
 
 def image_detector(url):
-    page = safe_request_get_as_text(url)
-    image_class = BeautifulSoup(page, 'html.parser').find('div', {'data-uranus-component': 'entryBody'}) \
-        .find_all('img', class_='PhotoSwipeImage')
-
+    err_num = 0
+    get_error = 0
+    while get_error == 0:
+        try:
+            global page, image_class
+            page = safe_request_get_as_text(url)
+            image_class = BeautifulSoup(page, 'html.parser').find('div',
+                                                                  {'data-uranus-component': 'entryBody'}).find_all(
+                'img', class_='PhotoSwipeImage')
+            get_error += 1
+        except BaseException as error:
+            print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
+            sys.stderr.flush()
+            sys.stdout.flush()
+            err_num += 1
+        if err_num > 5:
+            return None
     image_url = []
 
     hashtag = str(re.search('"theme_name":".*?"', page)[0])
@@ -197,6 +209,8 @@ def image_downloader(image_link):
 
 def sub_routine(id):
     for k in image_detector(id):
+        if k == None:
+            continue
         time.sleep(5.0000000000000)
         image_downloader(k)
     # https://ameblo.jp/juicejuice-official/entry-12527683506.html でエラーが出る。(写真集へのリンクが悪さしてる)
