@@ -26,11 +26,15 @@ for file_name in exist_file:
     downloaded_key.append(int((file_name.split('=')[-1].split('-')[0])))
 downloaded_key = list(set(downloaded_key))
 # print(downloaded_key)
-time.sleep(1)
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds"]
+
+request_header = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/96.0.4664.93 Safari/537.36 '
+}
 
 
 def safe_request_get_as_text(url):
@@ -39,7 +43,7 @@ def safe_request_get_as_text(url):
     get_error = 0
     while get_error == 0:
         try:
-            text = requests.get(url).text
+            text = requests.get(url, headers=request_header).text
             get_error += 1
         except BaseException as error:
             print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
@@ -53,7 +57,7 @@ def safe_request_get_as_text(url):
 
 
 def inspect_entry_list(url):
-    print("\nProcessing: " + url)
+    print(" Processing: " + url)
     sys.stderr.flush()
     sys.stdout.flush()
     item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {'class': 'skin-archiveList'}) \
@@ -94,7 +98,7 @@ def diary_link_crawler(keyword):
     exist_file_url = []
     for url_num in downloaded_key:
         exist_file_url.append("https://ameblo.jp/" + keyword + "/entry-" + str(url_num) + ".html")
-    dairy_url_list = list(set(dairy_url_list)-set(exist_file_url))
+    dairy_url_list = list(set(dairy_url_list) - set(exist_file_url))
 
     pprint.pprint(dairy_url_list)
     # time.sleep(1600)
