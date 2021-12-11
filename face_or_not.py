@@ -4,7 +4,8 @@ import os
 import joblib
 import pprint
 import time
-
+import dlib
+print(dlib.DLIB_USE_CUDA)
 N_JOBS = 6
 
 exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'images')), reverse=True) if
