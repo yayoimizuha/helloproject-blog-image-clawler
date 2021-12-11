@@ -17,10 +17,13 @@ ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
 N_JOBS = 40
-
-exist_file = [f for f in os.listdir('.') if os.path.isfile(os.path.join(os.getcwd(), f))]
+# print(os.listdir(os.path.join(os.getcwd(), 'images')))
+# time.sleep(10)
+exist_file = [f for f in os.listdir(os.path.join(os.getcwd(), 'images')) if
+              os.path.isfile(os.path.join(os.getcwd(), 'images', f))]
 # only image file
 exist_file = [f for f in exist_file if '.jpg' in f]
+
 downloaded_key = []
 for file_name in exist_file:
     downloaded_key.append(int((file_name.split('=')[-1].split('-')[0])))
@@ -187,6 +190,7 @@ def image_downloader(image_link):
 
     filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id \
                + '-' + image_order + '.jpg'
+    filename = os.path.join(os.getcwd(), 'images', filename)
     err_num = 0
     download_status = 0
     while download_status == 0:
