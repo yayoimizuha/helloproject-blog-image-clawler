@@ -40,6 +40,8 @@ request_header = {
                   'Chrome/96.0.4664.93 Safari/537.36 '
 }
 
+added_file = []
+
 
 def safe_request_get_as_text(url):
     err_num = 0
@@ -208,6 +210,7 @@ def image_downloader(image_link):
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime,
                     datetime.datetime.fromisoformat(str(image_link).split('#')[2]).timestamp()))
+    added_file.append([image_link, direct_image_link, os.path.basename(filename)])
     return 0
 
 
@@ -229,3 +232,7 @@ for i in blog_list:
 #    for j in diary_link_crawler(i):
 #        for k in image_detector(j):
 #            image_downloader(k)
+
+
+print("Added all new files:")
+pprint.pprint(added_file)

@@ -1,48 +1,51 @@
 import face_recognition
-import tinydb
+from pathlib import Path
 from PIL import Image
 import os
 import joblib
 import pprint
 import time
 import dlib
-from pathlib import Path
-from tinydb import TinyDB, Query, where
 from colorama import Fore, Back, Style
 
 print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
-N_JOBS = 1
+N_JOBS = 8
 
 exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'images')), reverse=True) if
                     os.path.isfile(os.path.join(os.getcwd(), 'images', f))]
 exist_image_file = [f for f in exist_image_file if '.jpg' in f]
 
-Search = Query()
-db = TinyDB(str(os.path.join(os.getcwd(), 'face_dataset', 'proceed.json')))
-#  table = db.table('face_datasets')
+exist_dataset_file = []
+
 for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
     if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         continue
     for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         if '.jpg' not in file:
             continue
-        print("image_str: " + str(file).split('=')[-1].split('.')[0])
-        print("Search index: " + str(db.search(Search.file == str(file).split('=')[-1].split('.')[0])))
-        if not db.search(Search.file == str(file).split('=')[-1].split('.')[0]) == []:
-            print(Fore.CYAN + "Index found.\nSkipping..." + Fore.RESET)
-            continue
-        print(Fore.RED + "Creating Index..." + Fore.RESET)
-        db.insert({'dir': dir_dataset, 'file': str(file).split('=')[-1].split('.')[0]})
-
+        exist_dataset_file.append(file.rsplit('-', 1)[0] + '.jpg')
+exist_dataset_file = list(set(exist_dataset_file))
+# print(Fore.BLUE)
+# pprint.pprint(exist_dataset_file)
+# print(Fore.RESET)
+# time.sleep(3)
+# print(Fore.GREEN)
+# pprint.pprint(exist_image_file)
+# print(Fore.RESET)
 images = []
-for f in exist_image_file:
+for f in set(exist_image_file) - set(exist_dataset_file):
     images.append(os.path.join(os.getcwd(), 'images', f))
 
+print("Begin Processing: " + str(pprint.PrettyPrinter(indent=4).pformat(images)))
+
+# Creating Directory.
 tags = []
 for f in exist_image_file:
     tags.append(f.split('=')[0])
 tags = list(sorted(set(tags)))
+tags.append('no_face')
 pprint.pprint(sorted(tags))
+
 for tag in tags:
     if not os.path.exists(os.path.join(os.getcwd(), 'face_dataset',
                                        str(os.path.splitext(os.path.basename(tag))[0]).split('=')[0])):
@@ -52,13 +55,6 @@ for tag in tags:
 
 
 def cut_out_face(image_path):
-    print("Image Path: " + os.path.basename(image_path))
-    print(db.search(Search.file == os.path.basename(image_path).split('=')[-1].split('.')[0]))
-    if not db.search(Search.file == os.path.basename(image_path).split('=')[-1].split('.')[0]):
-        print("This file is already proceed. :" + os.path.basename(image_path))
-        print("\n\n")
-        return 0
-
     image = face_recognition.load_image_file(image_path)
     face_locations = face_recognition.face_locations(image)
     print(str(face_locations))
@@ -66,7 +62,8 @@ def cut_out_face(image_path):
     print(image_path)
     image_order = 0
     last_write_time = os.stat(path=image_path).st_atime
-
+    if not face_locations:
+        face_locations = [(10, 10, 10, 10)]
     for face_location in face_locations:
         # Print the location of each face in this image
         top, right, bottom, left = face_location
@@ -88,9 +85,19 @@ def cut_out_face(image_path):
                                 str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                 str(image_order) + '.jpg')
 
+        filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
+                                        str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
+                                        str(image_order) + '.jpg')
         # 画像サイズが0なら返す
         if (top - bottom) * (right - left) == 0:
+            Path(filename_no_face).touch()
+            print("Image is blank")
             continue
+        if (bottom - top) < 150 or (right - left) < 150:
+            Path(filename_no_face).touch()
+            print("Image is too small")
+            continue
+
         # print("A face is located at pixel location Top: {}, Left: {}, Bottom: {}, Right: {}".format(top, left, bottom,
         #                                                                                             right))
 
@@ -102,19 +109,6 @@ def cut_out_face(image_path):
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
-        db.update({'dir': str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
-                   'file': str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[-1].split('.')[0]})
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
-db.all()
-
-
-def del_small_images():
-    exist_file = []
-    for dirPath, dirs, files in os.walk(os.path.join(os.getcwd(), 'face_dataset')):
-        if not files:
-            continue
-        pprint.pprint(files)
-        exist_file.extend(files)
-    print("Exist files: " + str(len(exist_file)))
