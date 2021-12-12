@@ -9,10 +9,10 @@ import dlib
 from colorama import Fore, Back, Style
 
 print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
-if dlib.DLIB_USE_CUDA:
-    face_recognition_option = 'batch_size=128'
-else:
-    face_recognition_option = ""
+# if dlib.DLIB_USE_CUDA:
+#     face_recognition_option = 'batch_size=128'
+# else:
+#     face_recognition_option = ""
 N_JOBS = 8
 
 exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'images')), reverse=True) if
@@ -60,7 +60,7 @@ for tag in tags:
 
 def cut_out_face(image_path):
     image = face_recognition.load_image_file(image_path)
-    face_locations = face_recognition.face_locations(image, face_recognition_option)
+    face_locations = face_recognition.face_locations(image)
     print(str(face_locations))
     print(image.shape)
     print(image_path)
@@ -68,6 +68,9 @@ def cut_out_face(image_path):
     last_write_time = os.stat(path=image_path).st_mtime
     if not face_locations:
         face_locations = [(10, 10, 10, 10)]
+
+    filename_no_face = ""
+
     for face_location in face_locations:
         # Print the location of each face in this image
         top, right, bottom, left = face_location
@@ -88,17 +91,14 @@ def cut_out_face(image_path):
                                 str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
                                 str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                 str(image_order) + '.jpg')
-
         filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
                                         str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                         str(image_order) + '.jpg')
         # 画像サイズが0なら返す
         if (top - bottom) * (right - left) == 0:
-            Path(filename_no_face).touch()
             print("Image is blank")
             continue
         if (bottom - top) < 150 or (right - left) < 150:
-            Path(filename_no_face).touch()
             print("Image is too small")
             continue
 
@@ -113,6 +113,8 @@ def cut_out_face(image_path):
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
+    if image_order == 0:
+        Path(filename_no_face).touch()
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
