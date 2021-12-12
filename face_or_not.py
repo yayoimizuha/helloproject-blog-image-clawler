@@ -1,29 +1,38 @@
 import face_recognition
+import tinydb
 from PIL import Image
 import os
 import joblib
 import pprint
 import time
 import dlib
-print(dlib.DLIB_USE_CUDA)
-N_JOBS = 6
+from pathlib import Path
+from tinydb import TinyDB, Query, where
+from colorama import Fore, Back, Style
+
+print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
+N_JOBS = 1
 
 exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'images')), reverse=True) if
                     os.path.isfile(os.path.join(os.getcwd(), 'images', f))]
 exist_image_file = [f for f in exist_image_file if '.jpg' in f]
 
-exist_file = []
-for dirPath, dirs, files in os.walk(os.path.join(os.getcwd(), 'face_dataset')):
-    if not files:
+Search = Query()
+db = TinyDB(str(os.path.join(os.getcwd(), 'face_dataset', 'proceed.json')))
+#  table = db.table('face_datasets')
+for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
+    if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         continue
-    pprint.pprint(files)
-    exist_file.extend(files)
-pprint.pprint(exist_file)
-exist_file = "".join(exist_file)
-
-# time.sleep(50)
-
-# exist_image_file = ["ブログ=angerme-amerika=11980474019-1.jpg"]
+    for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
+        if '.jpg' not in file:
+            continue
+        print("image_str: " + str(file).split('=')[-1].split('.')[0])
+        print("Search index: " + str(db.search(Search.file == str(file).split('=')[-1].split('.')[0])))
+        if not db.search(Search.file == str(file).split('=')[-1].split('.')[0]) == []:
+            print(Fore.CYAN + "Index found.\nSkipping..." + Fore.RESET)
+            continue
+        print(Fore.RED + "Creating Index..." + Fore.RESET)
+        db.insert({'dir': dir_dataset, 'file': str(file).split('=')[-1].split('.')[0]})
 
 images = []
 for f in exist_image_file:
@@ -44,17 +53,20 @@ for tag in tags:
 
 def cut_out_face(image_path):
     print("Image Path: " + os.path.basename(image_path))
-    if os.path.basename(image_path)[:-4] in exist_file:
-        print("This file is already proceed. :" + os.path.basename(image_path) + "\n\n\n")
+    print(db.search(Search.file == os.path.basename(image_path).split('=')[-1].split('.')[0]))
+    if not db.search(Search.file == os.path.basename(image_path).split('=')[-1].split('.')[0]):
+        print("This file is already proceed. :" + os.path.basename(image_path))
+        print("\n\n")
         return 0
 
     image = face_recognition.load_image_file(image_path)
     face_locations = face_recognition.face_locations(image)
-    print("\n\n\n" + str(face_locations))
+    print(str(face_locations))
     print(image.shape)
     print(image_path)
     image_order = 0
     last_write_time = os.stat(path=image_path).st_atime
+
     for face_location in face_locations:
         # Print the location of each face in this image
         top, right, bottom, left = face_location
@@ -71,6 +83,11 @@ def cut_out_face(image_path):
         if right > int(image.shape[1]) - 1:
             right = image.shape[1] - 1
 
+        filename = os.path.join(os.getcwd(), 'face_dataset',
+                                str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
+                                str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
+                                str(image_order) + '.jpg')
+
         # 画像サイズが0なら返す
         if (top - bottom) * (right - left) == 0:
             continue
@@ -81,14 +98,23 @@ def cut_out_face(image_path):
         print(str(top) + ',' + str(bottom) + ',' + str(left) + ',' + str(right))
         pil_image = Image.fromarray(face_image)
 
-        filename = os.path.join(os.getcwd(), 'face_dataset',
-                                str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
-                                str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
-                                str(image_order) + '.jpg')
         pil_image.save(filename)
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
+        db.update({'dir': str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
+                   'file': str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[-1].split('.')[0]})
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
+db.all()
+
+
+def del_small_images():
+    exist_file = []
+    for dirPath, dirs, files in os.walk(os.path.join(os.getcwd(), 'face_dataset')):
+        if not files:
+            continue
+        pprint.pprint(files)
+        exist_file.extend(files)
+    print("Exist files: " + str(len(exist_file)))
