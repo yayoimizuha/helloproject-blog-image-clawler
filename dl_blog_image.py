@@ -236,3 +236,4 @@ for i in blog_list:
 
 print("Added all new files:")
 pprint.pprint(added_file)
+print("Add " + str(len(added_file)) + " files.")
