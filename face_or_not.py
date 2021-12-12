@@ -9,6 +9,10 @@ import dlib
 from colorama import Fore, Back, Style
 
 print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
+if dlib.DLIB_USE_CUDA:
+    face_recognition_option = 'batch_size=128'
+else:
+    face_recognition_option = ""
 N_JOBS = 8
 
 exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'images')), reverse=True) if
@@ -56,7 +60,7 @@ for tag in tags:
 
 def cut_out_face(image_path):
     image = face_recognition.load_image_file(image_path)
-    face_locations = face_recognition.face_locations(image)
+    face_locations = face_recognition.face_locations(image, face_recognition_option)
     print(str(face_locations))
     print(image.shape)
     print(image_path)
