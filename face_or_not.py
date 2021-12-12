@@ -113,6 +113,7 @@ def cut_out_face(image_path):
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
+    print("")
     if image_order == 0:
         Path(filename_no_face).touch()
 
