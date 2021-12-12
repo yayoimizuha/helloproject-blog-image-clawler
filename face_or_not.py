@@ -36,7 +36,7 @@ images = []
 for f in set(exist_image_file) - set(exist_dataset_file):
     images.append(os.path.join(os.getcwd(), 'images', f))
 
-print("Begin Processing: " + str(pprint.PrettyPrinter(indent=4).pformat(images)))
+print("Begin Processing: " + str(len(images)))
 
 # Creating Directory.
 tags = []
@@ -61,7 +61,7 @@ def cut_out_face(image_path):
     print(image.shape)
     print(image_path)
     image_order = 0
-    last_write_time = os.stat(path=image_path).st_atime
+    last_write_time = os.stat(path=image_path).st_mtime
     if not face_locations:
         face_locations = [(10, 10, 10, 10)]
     for face_location in face_locations:
