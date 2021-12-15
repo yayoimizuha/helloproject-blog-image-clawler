@@ -220,7 +220,6 @@ def sub_routine(id):
             continue
         time.sleep(5.0000000000000)
         image_downloader(k)
-    # https://ameblo.jp/juicejuice-official/entry-12527683506.html でエラーが出る。(写真集へのリンクが悪さしてる)
 
 
 for i in blog_list:
