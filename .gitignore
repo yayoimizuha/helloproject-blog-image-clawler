@@ -1,3 +1,4 @@
 .idea/**
 images
 face_dataset/**
+**/**.jpg
