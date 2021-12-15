@@ -26,6 +26,8 @@ known_face_encodings = []
 known_face_names = []
 
 for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
+    if dir_dataset == 'no_face' or dir_dataset == 'お知らせ' or dir_dataset == 'ブログ':
+        continue
     if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         continue
     for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train')):
@@ -33,11 +35,15 @@ for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
             continue
         print("Added: " + file)
         known_face_names.append(dir_dataset)
-        known_face_encodings.append(face_recognition.face_encodings(
-            face_recognition.load_image_file(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train', file)))[0])
+        known_face = face_recognition.face_encodings(
+            face_recognition.load_image_file(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train', file)))
+        if not known_face:
+            continue
+        known_face_encodings.append(known_face[0])
 
 # Load an image with an unknown face
-unknown_image = face_recognition.load_image_file(os.path.join(os.getcwd(), 'sample_images', 'two_people.jpg'))
+unknown_image = face_recognition.load_image_file(
+    os.path.join(os.getcwd(), 'images', '井上玲音=juicejuice-official=12715332588-1.jpg'))
 
 # Find all the faces and face encodings in the unknown image
 face_locations = face_recognition.face_locations(unknown_image)
