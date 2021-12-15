@@ -1,4 +1,5 @@
 .idea/**
 images
 face_dataset/**
-**/**.jpg
+/member_infographics/*
+!/member_infographics/get-ufg-pic.py

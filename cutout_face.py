@@ -1,13 +1,14 @@
+import time
 import face_recognition
 from pathlib import Path
 from PIL import Image
 import os
 import joblib
 import pprint
-import time
 import dlib
 from colorama import Fore, Back, Style
 
+now_time = time.time()
 print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
 # if dlib.DLIB_USE_CUDA:
 #     face_recognition_option = 'batch_size=128'
@@ -119,3 +120,5 @@ def cut_out_face(image_path):
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
+
+print(str(time.time() - now_time) + " sec")

@@ -22,14 +22,19 @@ biden_image = face_recognition.load_image_file(os.path.join(os.getcwd(), 'sample
 biden_face_encoding = face_recognition.face_encodings(biden_image)[0]
 
 # Create arrays of known face encodings and their names
-known_face_encodings = [
-    obama_face_encoding,
-    biden_face_encoding
-]
-known_face_names = [
-    "Barack Obama",
-    "Joe Biden"
-]
+known_face_encodings = []
+known_face_names = []
+
+for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
+    if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
+        continue
+    for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train')):
+        if '.jpg' not in file:
+            continue
+        print("Added: " + file)
+        known_face_names.append(dir_dataset)
+        known_face_encodings.append(face_recognition.face_encodings(
+            face_recognition.load_image_file(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train', file)))[0])
 
 # Load an image with an unknown face
 unknown_image = face_recognition.load_image_file(os.path.join(os.getcwd(), 'sample_images', 'two_people.jpg'))
