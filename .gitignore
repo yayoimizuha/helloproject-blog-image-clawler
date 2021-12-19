@@ -3,3 +3,4 @@ images
 face_dataset/**
 /member_infographics/*
 !/member_infographics/get-ufg-pic.py
+selected_dataset
