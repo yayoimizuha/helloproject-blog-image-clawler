@@ -18,6 +18,7 @@ for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
             continue
         known_face_file.append(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, file))
 
+random.seed(0)
 random.shuffle(known_face_file)
 
 print("file count: " + str(len(known_face_file)))
