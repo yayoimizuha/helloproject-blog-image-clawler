@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import os
 import shutil
 import webbrowser
+import random
 
 known_face_file = []
 
@@ -17,7 +18,8 @@ for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
             continue
         known_face_file.append(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, file))
 
-# random.shuffle(known_face_file)
+random.shuffle(known_face_file)
+
 print("file count: " + str(len(known_face_file)))
 
 window_size = [1920, 1080]
@@ -50,8 +52,8 @@ def show_image(order, root):
         label1.destroy()
         label2.destroy()
     init = False
-    label1 = tkinter.Label(root, text=person_name, font=font)
-    label2 = tkinter.Label(root, text=image_order, font=font)
+    label1 = tkinter.Label(root, text=person_name, font=font, relief='groove')
+    label2 = tkinter.Label(root, text=image_order, font=font, relief='groove')
     canvas = tkinter.Canvas(
         root,
         width=width,
@@ -114,7 +116,7 @@ def yes(event):
                      os.path.basename(known_face_file[image_order]).split('=')[0],
                      os.path.basename(known_face_file[image_order])
                  ))
-    go_next('')
+    go_next(None)
 
 
 def do_nothing(event):
