@@ -16,7 +16,8 @@ for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
     for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         if '.jpg' not in file:
             continue
-        known_face_file.append(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, file))
+        known_face_file.append(os.path.join(
+            os.getcwd(), 'face_dataset', dir_dataset, file))
 
 random.seed(0)
 random.shuffle(known_face_file)
@@ -69,7 +70,8 @@ def show_image(order, root):
         tag='image'
     )
     canvas.pack(side='bottom')
-    canvas.place(x=(window_size[0] - width) / 2, y=(window_size[1] - height) / 2)
+    canvas.place(x=(window_size[0] - width) / 2,
+                 y=(window_size[1] - height) / 2)
     before_button.pack()
     next_button.pack()
     label1.pack(side=tkinter.LEFT)
@@ -114,9 +116,10 @@ def yes(event):
                  os.path.join(
                      os.getcwd(),
                      'selected_dataset',
-                     os.path.basename(known_face_file[image_order]).split('=')[0],
+                     os.path.basename(
+                         known_face_file[image_order]).split('=')[0],
                      os.path.basename(known_face_file[image_order])
-                 ))
+    ))
     go_next(None)
 
 
