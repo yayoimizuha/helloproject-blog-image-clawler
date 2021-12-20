@@ -37,6 +37,7 @@ exist_dataset_file = list(set(exist_dataset_file))
 # print(Fore.GREEN)
 # pprint.pprint(exist_image_file)
 # print(Fore.RESET)
+print([len(exist_dataset_file), len(exist_image_file)])
 images = []
 for f in set(exist_image_file) - set(exist_dataset_file):
     images.append(os.path.join(os.getcwd(), 'images', f))
