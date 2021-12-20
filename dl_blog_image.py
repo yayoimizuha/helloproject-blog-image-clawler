@@ -10,7 +10,6 @@ import itertools
 import datetime
 import os
 import ssl
-import http
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
