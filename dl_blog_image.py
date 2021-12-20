@@ -16,6 +16,8 @@ ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = ssl._create_unverified_context
 
+now_time = time.time()
+
 N_JOBS = 40
 # print(os.listdir(os.path.join(os.getcwd(), 'images')))
 # time.sleep(10)
@@ -248,3 +250,4 @@ for i in blog_list:
 print("Added all new files:")
 pprint.pprint(added_file)
 print("Add " + str(len(added_file)) + " files.")
+print(str(time.time() - now_time) + " sec")
