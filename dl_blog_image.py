@@ -10,6 +10,7 @@ import itertools
 import datetime
 import os
 import ssl
+import http
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
@@ -49,7 +50,10 @@ def safe_request_get_as_text(url):
     text = ""
     while get_error == 0:
         try:
-            text = requests.get(url, headers=request_header).text
+            page = requests.get(url, headers=request_header)
+            text = page.text
+            if page.status_code == 404:
+                return None
             get_error += 1
         except BaseException as error:
             print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
@@ -66,7 +70,10 @@ def inspect_entry_list(url):
     print(" Processing: " + url)
     sys.stderr.flush()
     sys.stdout.flush()
-    item_tags = BeautifulSoup(safe_request_get_as_text(url), 'html.parser').find('ul', {
+    item_tags_html = safe_request_get_as_text(url)
+    if item_tags_html is None:
+        return []
+    item_tags = BeautifulSoup(item_tags_html, 'html.parser').find('ul', {
         'class': 'skin-archiveList'}).find_all('h2', {'data-uranus-component': 'entryItemTitle'})
     hrefs = []
     for tag in item_tags:
@@ -118,6 +125,8 @@ def image_detector(url):
     while get_error == 0:
         try:
             page = safe_request_get_as_text(url)
+            if page is None:
+                return []
             image_class = BeautifulSoup(page, 'html.parser').find('div',
                                                                   {'data-uranus-component': 'entryBody'}).find_all(
                 'img', class_='PhotoSwipeImage')
@@ -175,8 +184,11 @@ def image_downloader(image_link):
     get_error = 0
     while get_error == 0:
         try:
+            image_link_html = safe_request_get_as_text(image_link)
+            if image_link_html is None:
+                return 0
             direct_image_link = \
-                BeautifulSoup(safe_request_get_as_text(image_link), 'html.parser').find('main') \
+                BeautifulSoup(image_link_html, 'html.parser').find('main') \
                     .find('img', {'aria-hidden': 'false'})['src']
             get_error += 1
         except BaseException as error:

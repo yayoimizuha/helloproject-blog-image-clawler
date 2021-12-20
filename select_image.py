@@ -119,12 +119,31 @@ def yes(event):
                      os.path.basename(
                          known_face_file[image_order]).split('=')[0],
                      os.path.basename(known_face_file[image_order])
-    ))
+                 ))
     go_next(None)
 
 
 def do_nothing(event):
     pass
+
+
+def no(event):
+    if os.path.isfile(os.path.join(
+            os.getcwd(),
+            'selected_dataset',
+            os.path.basename(
+                known_face_file[image_order]).split('=')[0],
+            os.path.basename(known_face_file[image_order])
+    )):
+        print("Deleting..." + os.path.basename(known_face_file[image_order]))
+        os.remove(os.path.join(
+            os.getcwd(),
+            'selected_dataset',
+            os.path.basename(
+                known_face_file[image_order]).split('=')[0],
+            os.path.basename(known_face_file[image_order])
+        ))
+    go_next(None)
 
 
 def finish(event):
@@ -136,7 +155,7 @@ def finish(event):
 next_button.bind("<Button-1>", go_next)
 before_button.bind("<Button-1>", back_before)
 window_root.bind('<y>', yes)
-window_root.bind('<n>', go_next)
+window_root.bind('<n>', no)
 window_root.bind('<b>', back_before)
 window_root.bind('<o>', lambda e: webbrowser.open(
     'https://ameblo.jp/' + known_face_file[image_order].split('=')[1] + '/entry-' +
