@@ -46,9 +46,9 @@ added_file = []
 def safe_request_get_as_text(url):
     err_num = 0
     get_error = 0
+    text = ""
     while get_error == 0:
         try:
-            global text
             text = requests.get(url, headers=request_header).text
             get_error += 1
         except BaseException as error:
@@ -113,16 +113,17 @@ def diary_link_crawler(keyword):
 def image_detector(url):
     err_num = 0
     get_error = 0
+    page = ""
+    image_class = ""
     while get_error == 0:
         try:
-            global page, image_class
             page = safe_request_get_as_text(url)
             image_class = BeautifulSoup(page, 'html.parser').find('div',
                                                                   {'data-uranus-component': 'entryBody'}).find_all(
                 'img', class_='PhotoSwipeImage')
             get_error += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred:(1) " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(2) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             err_num += 1
@@ -179,7 +180,7 @@ def image_downloader(image_link):
                     .find('img', {'aria-hidden': 'false'})['src']
             get_error += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred:(2) " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(3) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             err_num += 1
@@ -200,7 +201,7 @@ def image_downloader(image_link):
             urllib.request.urlretrieve(direct_image_link, filename)
             download_status += 1
         except BaseException as error:
-            print("\n\n\n" + "Error occurred:(3) " + str(error) + "\n\n\n")
+            print("\n\n\n" + "Error occurred:(4) " + str(error) + "\n\n\n")
             sys.stderr.flush()
             sys.stdout.flush()
             err_num += 1
