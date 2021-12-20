@@ -23,9 +23,9 @@ exist_image_file = [f for f in exist_image_file if '.jpg' in f]
 exist_dataset_file = []
 
 for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
-    if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train')):
+    if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         continue
-    for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset, 'train')):
+    for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         if '.jpg' not in file:
             continue
         exist_dataset_file.append(file.rsplit('-', 1)[0] + '.jpg')
@@ -37,7 +37,6 @@ exist_dataset_file = list(set(exist_dataset_file))
 # print(Fore.GREEN)
 # pprint.pprint(exist_image_file)
 # print(Fore.RESET)
-print([len(exist_dataset_file), len(exist_image_file)])
 images = []
 for f in set(exist_image_file) - set(exist_dataset_file):
     images.append(os.path.join(os.getcwd(), 'images', f))
