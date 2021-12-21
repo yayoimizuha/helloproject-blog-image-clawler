@@ -21,10 +21,12 @@ exist_image_file = [f for f in sorted(os.listdir(os.path.join(os.getcwd(), 'imag
 exist_image_file = [f for f in exist_image_file if '.jpg' in f]
 
 exist_dataset_file = []
+exist_dataset_dir = []
 
 for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
     if not os.path.isdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         continue
+    exist_dataset_dir.append(dir_dataset)
     for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)):
         if '.jpg' not in file:
             continue
@@ -49,7 +51,7 @@ for f in exist_image_file:
     tags.append(f.split('=')[0])
 tags = list(sorted(set(tags)))
 tags.append('no_face')
-pprint.pprint(sorted(tags))
+pprint.pprint(sorted(set(tags) - set(exist_dataset_dir)))
 
 for tag in tags:
     if not os.path.exists(os.path.join(os.getcwd(), 'face_dataset',
