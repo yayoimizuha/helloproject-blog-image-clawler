@@ -1,9 +1,9 @@
 .idea/**
 images
-face_dataset/**
+face_dataset/*
 /member_infographics/*
 !/member_infographics/get-ufg-pic.py
 selected_dataset
 selected_count.txt
 .vscode
-face_dataset-2021-12-27/**
+face_dataset-2021-12-27/*
