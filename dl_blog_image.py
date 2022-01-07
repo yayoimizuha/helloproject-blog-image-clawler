@@ -224,13 +224,13 @@ def image_downloader(image_link):
     os.utime(path=filename,
              times=(os.stat(path=filename).st_atime,
                     datetime.datetime.fromisoformat(str(image_link).split('#')[2]).timestamp()))
-    added_file.append([image_link, direct_image_link, os.path.basename(filename)])
+    added_file.append([image_link.split('#')[0], direct_image_link, os.path.basename(filename)])
     return 0
 
 
-def sub_routine(id):
-    for k in image_detector(id):
-        if k == None:
+def sub_routine(url):
+    for k in image_detector(url):
+        if k is None:
             continue
         time.sleep(5.0000000000000)
         image_downloader(k)
@@ -239,13 +239,6 @@ def sub_routine(id):
 for i in blog_list:
     _ = joblib.Parallel(n_jobs=N_JOBS, backend='threading')(
         joblib.delayed(sub_routine)(url) for url in diary_link_crawler(i))
-    # time.sleep(300)
-
-# for i in blog_list:
-#    for j in diary_link_crawler(i):
-#        for k in image_detector(j):
-#            image_downloader(k)
-
 
 print("Added all new files:")
 pprint.pprint(added_file)
