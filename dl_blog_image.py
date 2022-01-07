@@ -34,7 +34,7 @@ downloaded_key = list(set(downloaded_key))
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds", "kobushi-factory", "countrygirls"]
+             "beyooooonds-chicatetsu", "beyooooonds", "ocha-norma"]
 # blog_list = ["juicejuice-official"]
 
 request_header = {
