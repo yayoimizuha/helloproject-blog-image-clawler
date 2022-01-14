@@ -204,8 +204,7 @@ def image_downloader(image_link):
     sys.stderr.flush()
     sys.stdout.flush()
 
-    filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id \
-               + '-' + image_order + '.jpg'
+    filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id + '-' + image_order + '.jpg'
     filename = os.path.join(os.getcwd(), 'images', filename)
     err_num = 0
     download_status = 0

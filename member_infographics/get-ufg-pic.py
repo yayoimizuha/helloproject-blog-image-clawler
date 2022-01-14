@@ -1,4 +1,5 @@
 import os
+import sys
 import urllib.request
 
 from PIL import Image
@@ -17,7 +18,7 @@ for pagelink in links:
 profile_page = []
 for pagelink in urls:
     profile_page.append('http://www.helloproject.com' + pagelink + 'profile/')
-#↑各グループのプロフィールページ取得
+# ↑各グループのプロフィールページ取得
 
 
 print(profile_page)
@@ -31,7 +32,7 @@ for link in profile_page:
     for member_link in group_member_list.find_all('div', {'class': 'photo_box'}):
         member_link = 'http://www.helloproject.com' + BeautifulSoup(str(member_link), 'html.parser').find('a')['href']
         group_member_link.append(member_link)
-#↑各メンバーのプロフィールページ取得
+# ↑各メンバーのプロフィールページ取得
 
 for member_profile_page_link in group_member_link:
     member_profile_page = requests.get(member_profile_page_link)
@@ -44,10 +45,11 @@ for member_profile_page_link in group_member_link:
     print(member_pic_link)
     urllib.request.urlretrieve(member_pic_link, member_name + '.jpg')
     img = Image.open(member_name + '.jpg')
-    img.save(member_name + '.jpg', 'jpeg', quality=85)
+#    img.save(member_name + '.jpg', 'jpeg', quality=85)
     print('\n\n')
-#↑各メンバーの画像取得
+# ↑各メンバーの画像取得
 
+sys.exit()
 
 # OG
 
@@ -60,7 +62,7 @@ for pagelink in og_artists('a'):
     og_profile_page = requests.get(og_profile_link)
     og_profile_page = BeautifulSoup(og_profile_page.text, 'html.parser').find('div', {'id': 'main-left'})
     og_name = og_profile_page.find('img')['alt']
-#↑各アーティストの名前取得
+    # ↑各アーティストの名前取得
     if og_name == 'kumai1901':
         og_name = '熊井友理奈'
     print(og_name)
@@ -76,9 +78,9 @@ for pagelink in og_artists('a'):
         og_pic_link = 'http://www.up-fc.jp' + og_pic_link
     else:
         print("error\n")
-#↑各アーティストの画像URL取得
+    # ↑各アーティストの画像URL取得
     urllib.request.urlretrieve(og_pic_link, og_name + '.png')
     img = Image.open(og_name + '.png')
     img.save(og_name + '.jpg', 'jpeg', quality=85)
     os.remove(og_name + '.png')
-#↑保存及び変換
+# ↑保存及び変換
