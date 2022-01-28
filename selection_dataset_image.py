@@ -13,7 +13,7 @@ for dir_dataset in os.listdir(os.path.join(os.getcwd(), 'face_dataset')):
     print(len(os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset))))
 
     for file in os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)) \
-            [::int((len(os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)))) / 500) + 1]:
+            [::int((len(os.listdir(os.path.join(os.getcwd(), 'face_dataset', dir_dataset)))) / 30) + 1]:
 
         if '.jpg' not in file:
             continue
