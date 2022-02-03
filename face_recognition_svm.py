@@ -28,6 +28,7 @@ Structure:
 """
 import glob
 import pprint
+import shutil
 
 import face_recognition
 import joblib
@@ -115,17 +116,50 @@ clf = svm.SVC(gamma='scale')
 clf.fit(encodings, names)
 
 # Load the test image with unknown faces into a numpy array
-test_image = face_recognition.load_image_file(
-    os.path.join(os.getcwd(), 'face_dataset', '佐藤優樹', "佐藤優樹=morningmusume-10ki=12705121595-1-0.jpg"))
+# test_image = face_recognition.load_image_file(
+#     os.path.join(os.getcwd(), 'face_dataset', '佐藤優樹', "佐藤優樹=morningmusume-10ki=12705121595-1-0.jpg"))
+#
+# # Find all the faces in the test image using the default HOG-based model
+# face_locations = face_recognition.face_locations(test_image)
+# no = len(face_locations)
+# print("Number of faces detected: ", no)
+#
+# # Predict all the faces in the test image using the trained classifier
+# for i in range(no):
+#     print("Found:", end='')
+#     test_image_enc = face_recognition.face_encodings(test_image)[i]
+#     name = clf.predict([test_image_enc])
+#     print(*name)
 
-# Find all the faces in the test image using the default HOG-based model
-face_locations = face_recognition.face_locations(test_image)
-no = len(face_locations)
-print("Number of faces detected: ", no)
+# all_test_data = glob.glob('./face_dataset/*/*.jpg')
 
-# Predict all the faces in the test image using the trained classifier
-print("Found:", end='')
-for i in range(no):
-    test_image_enc = face_recognition.face_encodings(test_image)[i]
-    name = clf.predict([test_image_enc])
-    print(*name)
+all_test_data = []
+all_test_data_dirs = os.listdir(os.path.join(os.getcwd(), 'face_dataset'))
+for dirs in all_test_data_dirs:
+    all_test_data.extend(os.listdir(os.path.join(os.getcwd(), 'face_dataset', dirs)))
+
+
+# for test_data in all_test_data:
+def recognize_face(test_data):
+    test_image = face_recognition.load_image_file(
+        os.path.join(os.getcwd(), 'face_dataset', test_data.split('=')[0], test_data))
+    face_locations = face_recognition.face_locations(test_image)
+    no = len(face_locations)
+    if no == 0:
+        print("No face found in " + test_data)
+    print("[" + str(len(all_test_data)) + "/" + str(all_test_data.index(test_data)) + "]\t" + test_data)
+    print("Number of faces detected: ", no)
+
+    for faces in range(no):
+        print("Found:", end='')
+        test_image_enc = face_recognition.face_encodings(test_image)[faces]
+        name = clf.predict([test_image_enc])
+        print(*name)
+        if not os.path.isdir(os.path.join(os.getcwd(), 'recognized_dir', *name)):
+            os.mkdir(os.path.join(os.getcwd(), 'recognized_dir', *name))
+            print("Create dir: " + str(*name))
+        shutil.copy2(os.path.join(os.getcwd(), 'face_dataset', test_data.split('=')[0], test_data),
+                     os.path.join(os.getcwd(), 'recognized_dir', *name, test_data))
+
+
+joblib.Parallel(n_jobs=-1)(joblib.delayed(recognize_face)(test_data) for test_data in all_test_data)

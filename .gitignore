@@ -12,3 +12,8 @@ drawn_box/*
 face_encoding.bin
 /face_dataset-2022-1-28/
 train_dir/
+/recognized_dir/
+**.zip
+**.7z
+**.bz2
+**.gz
