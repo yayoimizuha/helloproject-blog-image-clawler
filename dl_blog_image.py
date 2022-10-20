@@ -148,8 +148,8 @@ def image_detector(url):
     count = 0
     for images in image_class:
         count += 1
-        if count % 2 == 0:
-            continue
+        # if count % 2 == 0:
+        #     continue
         bs4_img = BeautifulSoup(str(images), 'html.parser').find('img')
         if int(float(re.sub(r"[^\d.]", "", bs4_img['width']))) < 30:
             continue
