@@ -38,8 +38,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
 # blog_list = ["juicejuice-official"]
 
 request_header = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/96.0.4664.93 Safari/537.36 '
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
 }
 
 added_file = []
@@ -159,6 +158,7 @@ def image_detector(url):
             str(url).rsplit('/', 1)[0] + '/image-' + bs4_img['data-entry-id'] + '-' + bs4_img['data-image-id']
             + '.html' + '#' + hashtag + '#' + str(iso_date) + '#' + bs4_img['data-image-order'])
     if int(len(image_url)) == 0:
+        print("Error as image url: " + url)
         return []
     print("image_url[" + str(int(len(image_url))) + "]: \n" + pprint.PrettyPrinter(indent=4).pformat(image_url) + '\n')
     sys.stderr.flush()
@@ -204,7 +204,8 @@ def image_downloader(image_link):
     sys.stderr.flush()
     sys.stdout.flush()
 
-    filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[-2] + '=' + blog_id + '-' + image_order + '.jpg'
+    filename = str(image_link).split('#')[1] + '=' + str(image_link).split('#')[0].split('/')[
+        -2] + '=' + blog_id + '-' + image_order + '.jpg'
     filename = os.path.join(os.getcwd(), 'images', filename)
     err_num = 0
     download_status = 0

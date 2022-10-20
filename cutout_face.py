@@ -1,15 +1,12 @@
 import time
-import face_recognition
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageFile
 import os
 import joblib
 import pprint
-import dlib
-from colorama import Fore, Back, Style
+import mediapipe_recognition_test
 
 now_time = time.time()
-print("Is Dlib Using CUDA?: " + str(dlib.DLIB_USE_CUDA))
 # if dlib.DLIB_USE_CUDA:
 #     face_recognition_option = 'batch_size=128'
 # else:
@@ -62,34 +59,17 @@ for tag in tags:
 
 
 def cut_out_face(image_path):
-    image = face_recognition.load_image_file(image_path)
-    face_locations = face_recognition.face_locations(image)
-    print(str(face_locations))
-    print(image.shape)
+    face_array = mediapipe_recognition_test.mediapipe_face_detect(image_path)
+    print(len(face_array))
     print(image_path)
     image_order = 0
     last_write_time = os.stat(path=image_path).st_mtime
-    if not face_locations:
-        face_locations = [(10, 10, 10, 10)]
+    if not face_array:
+        return
 
     filename_no_face = ""
 
-    for face_location in face_locations:
-        # Print the location of each face in this image
-        top, right, bottom, left = face_location
-        top -= int((bottom - top) * 0.6)
-        if top < 0:
-            top = 0
-        bottom += int((bottom - top) * 0.2)
-        if bottom > int(image.shape[0]) - 1:
-            bottom = image.shape[0] - 1
-        left -= int((right - left) * 0.2)
-        if left < 0:
-            left = 0
-        right += int((right - left) * 0.2)
-        if right > int(image.shape[1]) - 1:
-            right = image.shape[1] - 1
-
+    for face_image in face_array:
         filename = os.path.join(os.getcwd(), 'face_dataset',
                                 str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
                                 str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
@@ -97,21 +77,11 @@ def cut_out_face(image_path):
         filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
                                         str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                         str(image_order) + '.jpg')
-        # 画像サイズが0なら返す
-        if (top - bottom) * (right - left) == 0:
-            print("Image is blank")
-            continue
-        if (bottom - top) < 150 or (right - left) < 150:
-            print("Image is too small")
-            continue
 
         # print("A face is located at pixel location Top: {}, Left: {}, Bottom: {}, Right: {}".format(top, left, bottom,
         #                                                                                             right))
 
-        face_image = image[top:bottom, left:right]
-        print(str(top) + ',' + str(bottom) + ',' + str(left) + ',' + str(right))
-        pil_image = Image.fromarray(face_image)
-
+        pil_image = Image.fromarray(face_image, mode="RGB")
         pil_image.save(filename)
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
