@@ -158,7 +158,7 @@ def image_detector(url):
             str(url).rsplit('/', 1)[0] + '/image-' + bs4_img['data-entry-id'] + '-' + bs4_img['data-image-id']
             + '.html' + '#' + hashtag + '#' + str(iso_date) + '#' + bs4_img['data-image-order'])
     if int(len(image_url)) == 0:
-        print("Error as image url: " + url)
+        print("Any image is not found in url: " + url)
         return []
     print("image_url[" + str(int(len(image_url))) + "]: \n" + pprint.PrettyPrinter(indent=4).pformat(image_url) + '\n')
     sys.stderr.flush()

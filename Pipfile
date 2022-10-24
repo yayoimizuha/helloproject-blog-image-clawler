@@ -21,6 +21,7 @@ tensorflow_gpu = "*"
 wheel = "*"
 keras_preprocessing = "*"
 opencv-contrib-python = "==4.5.5.64"
+umap-learn = "*"
 
 [dev-packages]
 autopep8 = "*"
