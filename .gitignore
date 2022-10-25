@@ -17,6 +17,7 @@ train_dir/
 **.7z
 **.bz2
 **.gz
-clustered
+clustered*
 20180402-114759
 facenet
+face_dataset
