@@ -1,5 +1,5 @@
 import time
-from pathlib import Path
+import pathlib
 from PIL import Image, ImageFile
 import os
 import joblib
@@ -60,12 +60,13 @@ for tag in tags:
 
 def cut_out_face(image_path):
     face_array = mediapipe_recognition_test.mediapipe_face_detect(image_path)
-    print(len(face_array))
     print(image_path)
+    print(len(face_array))
+    print(face_array)
     image_order = 0
     last_write_time = os.stat(path=image_path).st_mtime
-    if not face_array:
-        return
+    # if not face_array:
+    #     return
 
     filename_no_face = ""
 
@@ -74,9 +75,6 @@ def cut_out_face(image_path):
                                 str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
                                 str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                 str(image_order) + '.jpg')
-        filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
-                                        str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
-                                        str(image_order) + '.jpg')
 
         # print("A face is located at pixel location Top: {}, Left: {}, Bottom: {}, Right: {}".format(top, left, bottom,
         #                                                                                             right))
@@ -86,9 +84,16 @@ def cut_out_face(image_path):
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
-    print("")
+        print("image order " + str(image_order))
     if image_order == 0:
-        Path(filename_no_face).touch()
+        print("image order " + str(image_order))
+        filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
+                                        str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
+                                        str(image_order) + '.jpg')
+
+        print("no_face" + filename_no_face)
+        pathlib.Path(filename_no_face).touch()
+    print("\n\n\n\n\n")
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)

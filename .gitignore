@@ -20,3 +20,6 @@ train_dir/
 clustered*
 20180402-114759
 facenet
+all_clustered
+face*
+full_clustered
