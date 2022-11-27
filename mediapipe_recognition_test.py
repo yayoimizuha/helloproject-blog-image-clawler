@@ -10,18 +10,18 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 
-def mediapipe_face_detect(file):
+def mediapipe_face_detect(image, confidence):
     with mp_face_detection.FaceDetection(
-            model_selection=0, min_detection_confidence=0.7) as face_detection:
-        try:
-            pil_image = Image.open(file)
-        except Exception as e:
-            print(e)
-            return []
-        image = cv2.cvtColor(numpy.array(pil_image), cv2.COLOR_BGR2RGB)
+            model_selection=0, min_detection_confidence=0.9) as face_detection:
+        # try:
+        #     pil_image = Image.open(file)
+        # except Exception as e:
+        #     print(e)
+        #     return []
         height, width, _ = image.shape[:3]
         # Convert the BGR image to RGB and process it with MediaPipe Face Detection.
-        results = face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+        results = face_detection.process(image)
 
         # Draw face detections of each face.
         return_array = []
@@ -29,6 +29,7 @@ def mediapipe_face_detect(file):
             return return_array
         annotated_image = image.copy()
         for idy, detection in enumerate(results.detections):
+            print(detection.score)
             # (x,y)
             LEFT_EYE = (
                 int(mp_face_detection.get_key_point(
@@ -74,7 +75,7 @@ def mediapipe_face_detect(file):
                        max(int(CENTER[0] - ELLIPSIS_SIZE[1] / 1.7), 0):
                        max(int(CENTER[0] + ELLIPSIS_SIZE[1] / 1.7), 0)]
             rt_h, rt_w, _ = rot_trim.shape[:3]
-            fixed_rot = Image.new(pil_image.mode, (max(rt_w, rt_h), max(rt_w, rt_h)), (255, 255, 255))
+            fixed_rot = Image.new("RGB", (max(rt_w, rt_h), max(rt_w, rt_h)), (255, 255, 255))
             if rt_w != rt_h:
                 if rt_w > rt_h:
                     fixed_rot.paste(Image.fromarray(rot_trim), (0, (rt_w - rt_h) // 2))

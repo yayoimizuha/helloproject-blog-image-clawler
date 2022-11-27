@@ -19,6 +19,10 @@ import matplotlib
 import multiprocessing
 from umap import UMAP
 from scipy.cluster.hierarchy import linkage, fcluster
+import h5py
+
+from pyclustering.cluster.xmeans import xmeans
+from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
 
 
 # import gpumap
@@ -73,9 +77,16 @@ def face_emb(path, dummy, ret_list):
             return embeddings
 
     face_embedding = FaceEmbedding(FACE_MODEL_PATH)
+    HDF5 = h5py.File(name="embeddings.hdf5", mode="a")
 
     for p in path:
-        ret_list.append(face_embedding.face_embeddings(p)[0])
+        if os.path.basename(p) in HDF5.keys():
+            ret_list.append(HDF5[os.path.basename(p)][()])
+        else:
+            emb = face_embedding.face_embeddings(p)[0]
+            ret_list.append(emb)
+            HDF5.create_dataset(os.path.basename(p), data=emb)
+    HDF5.close()
 
 
 for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_dataset/*"):
@@ -83,6 +94,7 @@ for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_d
     if dir_path == "/home/tomokazu/helloproject-blog-image-clawler/face_dataset/no_face":
         continue
     fim_path = glob.glob(dir_path + "/*")
+
     person_name = os.path.basename(dir_path)
     os.mkdir(os.path.join(os.getcwd(), "clustered", person_name))
 
@@ -102,7 +114,8 @@ for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_d
     process.close()
 
     print(features.shape)
-
+    if len(fim_path) < 150:
+        continue
     dim_reduction_time = time.time()
     # pca_time = time.time()
     reduced = PCA(n_components=70).fit_transform(features)
@@ -122,8 +135,10 @@ for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_d
 
     kmeans_time = time.time()
     K = 13
-    kmeans = KMeans(n_clusters=K).fit(reduced)
-    pred_label = kmeans.predict(reduced)
+    # kmeans = KMeans(n_clusters=K).fit(reduced)
+    # pred_label = kmeans.predict(reduced)
+    init_center = kmeans_plusplus_initializer(reduced, 5).initialize()
+    pred_label = xmeans(data=reduced, initial_centers=init_center, kmax=7, ccore=True).process().predict(reduced)
     # pred_label = fcluster(linkage(reduced, method='ward'), t=K - 1, criterion="maxclust")
     x = reduced[:, 0]
     y = reduced[:, 1]
@@ -144,7 +159,7 @@ for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_d
     # pprint.pprint(fim_path)
     # pprint.pprint(pred_label)
 
-    for i in range(0, K):
+    for i in range(0, 7):
         os.makedirs(os.path.join(os.getcwd(), "clustered", person_name, str(i)), exist_ok=True)
     for file_path, cluster in zip(fim_path, pred_label):
         os.link(file_path,

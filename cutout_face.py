@@ -5,6 +5,8 @@ import os
 import joblib
 import pprint
 import mediapipe_recognition_test
+import cv2
+import numpy
 
 now_time = time.time()
 # if dlib.DLIB_USE_CUDA:
@@ -45,7 +47,8 @@ print("Begin Processing: " + str(len(images)))
 # Creating Directory.
 tags = []
 for f in exist_image_file:
-    tags.append(f.split('=')[0])
+    tag = f.split('=')[0]
+    tags.append(tag)
 tags = list(sorted(set(tags)))
 tags.append('no_face')
 pprint.pprint(sorted(set(tags) - set(exist_dataset_dir)))
@@ -59,10 +62,18 @@ for tag in tags:
 
 
 def cut_out_face(image_path):
-    face_array = mediapipe_recognition_test.mediapipe_face_detect(image_path)
+    face_array_1 = mediapipe_recognition_test.mediapipe_face_detect(
+        cv2.cvtColor(numpy.array(Image.open(image_path)), cv2.COLOR_RGB2BGR), 0.7)
+    face_arrays = []
+    if not face_array_1:
+        return
+    for face_array in face_array_1:
+        recalc = mediapipe_recognition_test.mediapipe_face_detect(cv2.cvtColor(face_array, cv2.COLOR_RGB2BGR), 0.8)
+        if recalc:
+            face_arrays.append(recalc[0])
     print(image_path)
-    print(len(face_array))
-    print(face_array)
+    # print(len(face_array))
+    # print(face_array)
     image_order = 0
     last_write_time = os.stat(path=image_path).st_mtime
     # if not face_array:
@@ -70,7 +81,7 @@ def cut_out_face(image_path):
 
     filename_no_face = ""
 
-    for face_image in face_array:
+    for face_image in face_arrays:
         filename = os.path.join(os.getcwd(), 'face_dataset',
                                 str(os.path.splitext(os.path.basename(image_path))[0]).split('=')[0],
                                 str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
