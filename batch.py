@@ -18,6 +18,11 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib
 import multiprocessing
 from umap import UMAP
+from scipy.cluster.hierarchy import linkage, fcluster
+import h5py
+
+from pyclustering.cluster.xmeans import xmeans
+from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
 
 
 # import gpumap
@@ -31,9 +36,9 @@ def load_image(image_path, width, height, mode):
     return np.array(image.convert(mode))
 
 
-# FACE_MODEL_PATH = './20180402-114759/20180402-114759.pb'
-FACE_MODEL_PATH = os.path.join(os.getcwd(), '20180402-114759', '20180402-114759.pb')
-pprint.pprint(glob.glob(os.path.join(os.getcwd(), "face_dataset", "*")))
+FACE_MODEL_PATH = './20180402-114759/20180402-114759.pb'
+
+pprint.pprint(glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_dataset/*"))
 
 shutil.rmtree("clustered")
 os.mkdir("clustered")
@@ -72,16 +77,24 @@ def face_emb(path, dummy, ret_list):
             return embeddings
 
     face_embedding = FaceEmbedding(FACE_MODEL_PATH)
+    HDF5 = h5py.File(name="embeddings.hdf5", mode="a")
 
     for p in path:
-        ret_list.append(face_embedding.face_embeddings(p)[0])
+        if os.path.basename(p) in HDF5.keys():
+            ret_list.append(HDF5[os.path.basename(p)][()])
+        else:
+            emb = face_embedding.face_embeddings(p)[0]
+            ret_list.append(emb)
+            HDF5.create_dataset(os.path.basename(p), data=emb)
+    HDF5.close()
 
 
-for dir_path in glob.glob("face_dataset/*"):
+for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_dataset/*"):
 
-    if "no_face" in dir_path:
+    if dir_path == "/home/tomokazu/helloproject-blog-image-clawler/face_dataset/no_face":
         continue
-    fim_path = glob.glob(os.path.join(dir_path, "*"))
+    fim_path = glob.glob(dir_path + "/*")
+
     person_name = os.path.basename(dir_path)
     os.mkdir(os.path.join(os.getcwd(), "clustered", person_name))
 
@@ -101,15 +114,16 @@ for dir_path in glob.glob("face_dataset/*"):
     process.close()
 
     print(features.shape)
-
+    if len(fim_path) < 150:
+        continue
     dim_reduction_time = time.time()
     # pca_time = time.time()
-    reduced = PCA(n_components=130).fit_transform(features)
+    reduced = PCA(n_components=70).fit_transform(features)
     # print("PCA Dimensionality reduction Time: " + str(time.time() - pca_time))
     # umap_time = time.time()
-    reduced = UMAP(n_components=30).fit_transform(reduced)
-    reduced = PCA(n_components=15).fit_transform(reduced)
-    reduced = UMAP(n_components=3).fit_transform(reduced)
+    # reduced = UMAP(n_components=30).fit_transform(reduced)
+    # reduced = PCA(n_components=7).fit_transform(reduced)
+    reduced = UMAP(n_components=7).fit_transform(reduced)
     # print("UMAP Dimensionality reduction Time: " + str(time.time() - umap_time))
     print(reduced.shape)
 
@@ -121,11 +135,18 @@ for dir_path in glob.glob("face_dataset/*"):
 
     kmeans_time = time.time()
     K = 13
-    kmeans = KMeans(n_clusters=K).fit(reduced)
-    pred_label = kmeans.predict(reduced)
+    # kmeans = KMeans(n_clusters=K).fit(reduced)
+    # pred_label = kmeans.predict(reduced)
+    init_center = kmeans_plusplus_initializer(reduced, 5).initialize()
+    pred_label = xmeans(data=reduced, initial_centers=init_center, kmax=7, ccore=True).process().predict(reduced)
+    # pred_label = fcluster(linkage(reduced, method='ward'), t=K - 1, criterion="maxclust")
     x = reduced[:, 0]
     y = reduced[:, 1]
     print("K-means Time: " + str(time.time() - kmeans_time))
+    # plt.figure(figsize=(50, 50))
+    # plt.scatter(x, y, c=DBSCAN(min_samples=20, eps=.7).fit(reduced).labels_, cmap='tab10')
+    # plt.colorbar()
+    # plt.savefig(os.path.join(os.getcwd(), "clustered", person_name, "dbscan.png"))
 
     image_output_time = time.time()
     # dbscan = DBSCAN(eps=25, min_samples=100).fit(reduced)
@@ -138,7 +159,7 @@ for dir_path in glob.glob("face_dataset/*"):
     # pprint.pprint(fim_path)
     # pprint.pprint(pred_label)
 
-    for i in range(0, K):
+    for i in range(0, 7):
         os.makedirs(os.path.join(os.getcwd(), "clustered", person_name, str(i)), exist_ok=True)
     for file_path, cluster in zip(fim_path, pred_label):
         os.link(file_path,

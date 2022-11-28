@@ -22,6 +22,9 @@ wheel = "*"
 keras_preprocessing = "*"
 opencv-contrib-python = "==4.5.5.64"
 umap-learn = "*"
+h5py = "*"
+pyclustering = "*"
+pandas = "*"
 
 [dev-packages]
 autopep8 = "*"

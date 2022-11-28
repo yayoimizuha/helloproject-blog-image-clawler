@@ -34,7 +34,9 @@ downloaded_key = list(set(downloaded_key))
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
-             "beyooooonds-chicatetsu", "beyooooonds", "ocha-norma"]
+             "beyooooonds-chicatetsu", "beyooooonds", "ocha-norma", "countrygirls", "risa-ogata", "shimizu--saki",
+             "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official", "kobushi-factory",
+             "sayumimichishige-blog"]
 # blog_list = ["juicejuice-official"]
 
 request_header = {
@@ -144,6 +146,20 @@ def image_detector(url):
     if hashtag == "":
         hashtag = 'None'
     hashtag = hashtag[14:-1]
+    if 'risa-ogata' in url:
+        hashtag = '小片リサ'
+    if 'shimizu--saki' in url:
+        hashtag = "清水佐紀"
+    if 'kumai-yurina-blog' in url:
+        hashtag = "熊井友理奈"
+    if 'sudou-maasa-blog' in url:
+        hashtag = "須藤茉麻"
+    if 'sugaya-risako-blog' in url:
+        hashtag = "菅谷梨沙子"
+    if 'miyamotokarin-official' in url:
+        hashtag = "宮本佳林"
+    if 'sayumimichishige-blog' in url:
+        hashtag = "道重さゆみ"
     iso_date = str(re.search('"dateModified":".*?"', page)[0])[16:-1]
     count = 0
     for images in image_class:
