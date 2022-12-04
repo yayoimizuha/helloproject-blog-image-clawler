@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import matplotlib
 import multiprocessing
-from umap import UMAP
+from cuml import UMAP
 from scipy.cluster.hierarchy import linkage, fcluster
 import h5py
 
@@ -48,7 +48,10 @@ def face_emb(path, dummy, ret_list):
     # return [face_embedding.face_embeddings(f)[0] for f in fim_path]
 
     import tensorflow as tf
-    tf.config.threading.set_intra_op_parallelism_threads(1)
+    print(tf.config.list_physical_devices())
+    print(tf.config.get_visible_devices())
+
+    # tf.config.threading.set_intra_op_parallelism_threads(1)
 
     # print(tf.version.VERSION)
 
@@ -102,16 +105,18 @@ for dir_path in glob.glob("/home/tomokazu/helloproject-blog-image-clawler/face_d
 
     # 顔画像から特徴ベクトルを抽出
     emb_time = time.time()
-    manager = multiprocessing.Manager()
-    dummy_dict = manager.dict()
-    return_list = manager.list()
-    process = multiprocessing.Process(target=face_emb, args=(fim_path, dummy_dict, return_list))
-    process.start()
-    process.join()
+    # manager = multiprocessing.Manager()
+    # dummy_dict = manager.dict()
+    # return_list = manager.list()
+    # process = multiprocessing.Process(target=face_emb, args=(fim_path, dummy_dict, return_list))
+    # process.start()
+    # process.join()
+    face_emb(fim_path, [], [])
     print("FaceNet Time: " + str(time.time() - emb_time))
 
-    features = np.array(return_list)
-    process.close()
+    # features = np.array(return_list)
+    # process.close()
+    continue
 
     print(features.shape)
     if len(fim_path) < 150:
