@@ -26,6 +26,7 @@ h5py = "*"
 pyclustering = "*"
 pandas = "*"
 aiohttp = "*"
+lxml = "*"
 
 [dev-packages]
 autopep8 = "*"
