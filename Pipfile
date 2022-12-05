@@ -25,6 +25,7 @@ umap-learn = "*"
 h5py = "*"
 pyclustering = "*"
 pandas = "*"
+aiohttp = "*"
 
 [dev-packages]
 autopep8 = "*"
