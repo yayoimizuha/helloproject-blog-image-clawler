@@ -65,6 +65,8 @@ async def parse_image(url: str) -> tuple[str, str]:
             print(theme, end='\t')
             print(BeautifulSoup(resp_html, 'html.parser').find('title').text, end='\t')
             print(grep_modified_time(resp_html))
+            entry_body = BeautifulSoup(resp_html, 'html.parser').find('div', {'data-uranus-component': 'entryBody'})
+            image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
 
 
 theme_regex = re.compile('"theme_name":"(.*?)"')
