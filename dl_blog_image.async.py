@@ -13,7 +13,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-blog_list = ["beyooooonds"]
+# blog_list = ["beyooooonds"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
@@ -21,6 +21,7 @@ request_header = {
 
 
 async def run_all() -> None:
+    sem: Semaphore = Semaphore(PARALLEL_LIMIT)
     list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
                                     return_exceptions=True)
     for name, pages in zip(blog_list, list_pages_count):
@@ -30,12 +31,11 @@ async def run_all() -> None:
 
     for blog_name, count in zip(blog_list, list_pages_count):
         url_lists.extend(
-            await gather(*[parse_list_page(blog_name=blog_name, order=i) for i in range(1, count + 1)],
+            await gather(*[parse_list_page(blog_name=blog_name, order=i, sem=sem) for i in range(1, count + 1)],
                          return_exceptions=True))
     url_list = list(chain.from_iterable(url_lists))
     pprint.pprint(url_list)
 
-    sem: Semaphore = Semaphore(PARALLEL_LIMIT)
     await gather(*[parse_image(url, sem) for url in url_list])
 
 
@@ -44,10 +44,10 @@ async def parse_list_pages_count(blog_name: str) -> int:
         async with session.get(f"https://ameblo.jp/{blog_name}/entrylist.html") as resp:
             resp_html = await resp.text()
             last_url = BeautifulSoup(resp_html, 'lxml').find('a', class_='skin-paginationEnd')['href']
-            return int(re.search('entrylist-(.*?).html', last_url).group(1))
+    return int(re.search('entrylist-(.*?).html', last_url).group(1))
 
 
-async def parse_list_page(blog_name: str, order: int) -> list[str]:
+async def parse_list_page(blog_name: str, order: int, sem: Semaphore) -> list[str]:
     async with ClientSession(trust_env=True, headers=request_header) as session:
         async with session.get(f"https://ameblo.jp/{blog_name}/entrylist-{order}.html") as resp:
             resp_html = await resp.text()
@@ -59,12 +59,12 @@ async def parse_list_page(blog_name: str, order: int) -> list[str]:
                 title = blog_box.find('h2', {'data-uranus-component': 'entryItemTitle'})
                 # print(title.text, "https://ameblo.jp" + title.find('a')['href'])
                 url_list.append("https://ameblo.jp" + title.find('a')['href'])
-            return url_list
+    return url_list
 
 
 async def parse_image(url: str, sem: Semaphore) -> tuple[str, str]:
+    await sem.acquire()
     async with ClientSession(trust_env=True, headers=request_header) as session:
-        await sem.acquire()
         async with session.get(url) as resp:
             resp_html = await resp.text()
             sem.release()
