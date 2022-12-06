@@ -1,10 +1,10 @@
-import datetime
 import pprint
 import re
 from bs4 import BeautifulSoup
-from aiohttp import ClientSession, TCPConnector
+from aiohttp import ClientSession
 from itertools import chain
-from asyncio import gather, run, Semaphore, sleep
+from asyncio import gather, run, Semaphore
+from datetime import datetime
 
 PARALLEL_LIMIT = 300
 
@@ -14,7 +14,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-# blog_list = ["beyooooonds"]
+blog_list = ["ocha-norma"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
@@ -23,6 +23,7 @@ request_header = {
 
 async def run_all() -> None:
     sem: Semaphore = Semaphore(PARALLEL_LIMIT)
+    session: ClientSession = ClientSession(trust_env=True, headers=request_header)
     list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
                                     return_exceptions=True)
     for name, pages in zip(blog_list, list_pages_count):
@@ -32,7 +33,7 @@ async def run_all() -> None:
 
     for blog_name, count in zip(blog_list, list_pages_count):
         url_lists.extend(
-            await gather(*[parse_list_page(blog_name=blog_name, order=i, sem=sem) for i in range(1, count + 1)],
+            await gather(*[parse_list_page(blog_name, i, sem, session) for i in range(1, count + 1)],
                          return_exceptions=True))
     url_list = list(chain.from_iterable(url_lists))
     # pprint.pprint(url_list)
@@ -40,7 +41,10 @@ async def run_all() -> None:
         if 'html' not in url:
             print(url)
 
-    await gather(*[parse_image(url, sem) for url in url_list])
+    image_link = await gather(*[parse_image(url, sem, session) for url in url_list])
+    pprint.pprint(list(chain.from_iterable(image_link)))
+
+    await session.close()
 
 
 async def parse_list_pages_count(blog_name: str) -> int:
@@ -51,15 +55,10 @@ async def parse_list_pages_count(blog_name: str) -> int:
     return int(re.search('entrylist-(.*?).html', last_url).group(1))
 
 
-async def parse_list_page(blog_name: str, order: int, sem: Semaphore) -> list[str]:
-    await sem.acquire()
-    session = ClientSession(trust_env=True, headers=request_header)
-    resp = await session.get(f"https://ameblo.jp/{blog_name}/entrylist-{order}.html")
-    resp_html = await resp.text()
-    resp.close()
-    await session.close()
-    session.detach()
-    sem.release()
+async def parse_list_page(blog_name: str, order: int, sem: Semaphore, session: ClientSession) -> list[str]:
+    async with sem:
+        async with session.get(f"https://ameblo.jp/{blog_name}/entrylist-{order}.html") as resp:
+            resp_html = await resp.text()
     print(blog_name, order, sep='\t')
     archive_body = BeautifulSoup(resp_html, 'lxml').find('ul', class_='skin-archiveList')
     blog_boxes = archive_body.find_all('li', class_='skin-borderQuiet')
@@ -71,25 +70,29 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore) -> list[st
     return url_list
 
 
-async def parse_image(url: str, sem: Semaphore) -> tuple[str, str, datetime.datetime]:
-    conn = TCPConnector(keepalive_timeout=10, enable_cleanup_closed=True, force_close=True)
-    await sem.acquire()
-    session = ClientSession(trust_env=True, headers=request_header, connector=conn)
-    resp = await session.get(url)
-    resp_html = await resp.text()
-    await sleep(0.5)
-    resp.close()
-    await session.close()
-    session.detach()
+# filename , url ,date
+async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[tuple[str, str, datetime]]:
+    async with sem:
+        async with session.get(url) as resp:
+            resp_html = await resp.text()
     theme = grep_theme(resp_html)
-    await conn.close()
-    conn.__del__()
+    date = datetime.fromisoformat(grep_modified_time(resp_html))
+    blog_account = url.split('/')[-2]
+    blog_entry = url.split('/')[-1].split('.')[0]
+    parse = BeautifulSoup(resp_html, 'lxml')
     print(theme, end='\t')
-    print(BeautifulSoup(resp_html, 'lxml').find('title').text, end='\t')
+    print(parse.find('title').text, end='\t')
     print(grep_modified_time(resp_html))
-    entry_body = BeautifulSoup(resp_html, 'lxml').find('div', {'data-uranus-component': 'entryBody'})
+    entry_body = parse.find('div', {'data-uranus-component': 'entryBody'})
     image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
-    sem.release()
+    return_list = list()
+    for div in image_divs:
+        return_list.append((
+            '='.join([theme, blog_account, blog_entry]) + '-' + div["data-image-order"] + '.jpg',
+            str(div["src"]).split('?')[0],
+            date
+        ))
+    return return_list
 
 
 theme_regex = re.compile('"theme_name":"(.*?)"')
