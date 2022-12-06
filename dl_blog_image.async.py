@@ -41,7 +41,7 @@ async def run_all() -> None:
         if 'html' not in url:
             print(url)
 
-    image_link = await gather(*[parse_image(url, sem, session) for url in url_list])
+    image_link = await gather(*[parse_image(url, sem, session) for url in url_list], return_exceptions=True)
     pprint.pprint(list(chain.from_iterable(image_link)))
 
     await session.close()
