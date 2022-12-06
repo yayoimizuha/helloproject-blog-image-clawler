@@ -2,9 +2,9 @@ import datetime
 import pprint
 import re
 from bs4 import BeautifulSoup
-from aiohttp import ClientSession
+from aiohttp import ClientSession, TCPConnector
 from itertools import chain
-from asyncio import gather, run, Semaphore
+from asyncio import gather, run, Semaphore, sleep
 
 PARALLEL_LIMIT = 300
 
@@ -58,6 +58,7 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore) -> list[st
     resp_html = await resp.text()
     resp.close()
     await session.close()
+    session.detach()
     sem.release()
     print(blog_name, order, sep='\t')
     archive_body = BeautifulSoup(resp_html, 'lxml').find('ul', class_='skin-archiveList')
@@ -71,19 +72,24 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore) -> list[st
 
 
 async def parse_image(url: str, sem: Semaphore) -> tuple[str, str, datetime.datetime]:
+    conn = TCPConnector(keepalive_timeout=10, enable_cleanup_closed=True, force_close=True)
     await sem.acquire()
-    session = ClientSession(trust_env=True, headers=request_header)
+    session = ClientSession(trust_env=True, headers=request_header, connector=conn)
     resp = await session.get(url)
     resp_html = await resp.text()
+    await sleep(0.5)
     resp.close()
     await session.close()
-    sem.release()
+    session.detach()
     theme = grep_theme(resp_html)
+    await conn.close()
+    conn.__del__()
     print(theme, end='\t')
     print(BeautifulSoup(resp_html, 'lxml').find('title').text, end='\t')
     print(grep_modified_time(resp_html))
     entry_body = BeautifulSoup(resp_html, 'lxml').find('div', {'data-uranus-component': 'entryBody'})
     image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
+    sem.release()
 
 
 theme_regex = re.compile('"theme_name":"(.*?)"')
