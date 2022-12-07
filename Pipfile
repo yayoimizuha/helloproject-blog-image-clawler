@@ -27,6 +27,7 @@ pyclustering = "*"
 pandas = "*"
 aiohttp = "*"
 lxml = "*"
+aiofiles = "*"
 
 [dev-packages]
 autopep8 = "*"
