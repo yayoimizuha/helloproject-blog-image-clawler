@@ -3,7 +3,7 @@ import re
 import sys
 
 from bs4 import BeautifulSoup
-from aiohttp import ClientSession, ClientConnectorError, TCPConnector
+from aiohttp import ClientSession, ClientConnectorError, TCPConnector, AsyncResolver
 from itertools import chain
 from asyncio import gather, run, Semaphore, sleep
 from datetime import datetime
@@ -24,17 +24,17 @@ request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
 }
 
+url_lists: list = list()
+
 
 async def run_all() -> None:
     sem: Semaphore = Semaphore(PARALLEL_LIMIT)
     session: ClientSession = ClientSession(trust_env=True, headers=request_header,
-                                           connector=TCPConnector(use_dns_cache=True))
+                                           connector=TCPConnector(resolver=AsyncResolver()))
     list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
                                     return_exceptions=True)
     for name, pages in zip(blog_list, list_pages_count):
         print(name, pages)
-
-    url_lists: list = list()
 
     for blog_name, count in zip(blog_list, list_pages_count):
         url_lists.extend(
@@ -94,6 +94,7 @@ async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[
     blog_account = url.split('/')[-2]
     blog_entry = url.split('/')[-1].split('.')[0]
     parse = BeautifulSoup(resp_html, 'lxml')
+    print(url_lists.index(url), end='\t')
     print(theme + "　" * (8 - len(theme)), end='')
     print(date.date(), end='\t')
     print(parse.find('title').text)
