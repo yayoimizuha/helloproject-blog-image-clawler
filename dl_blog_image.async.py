@@ -139,6 +139,8 @@ async def download_image(filename: str, url: str, date: datetime, sem: Semaphore
     async with sem:
         # print("download: ", url)
         async with session.get(url) as resp:
+            if resp.content_type != "image/jpeg":
+                return
             async with open(file=filepath, mode="wb") as f:
                 await f.write(await resp.read())
     utime(path=filepath, times=(stat(path=filepath).st_atime, date.timestamp()))
