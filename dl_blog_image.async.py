@@ -1,16 +1,15 @@
-from pprint import pprint
 import re
 import sys
 from bs4 import BeautifulSoup
-from aiohttp import ClientSession, ClientConnectorError, TCPConnector, AsyncResolver
+from aiohttp import ClientSession, ClientConnectorError
 from itertools import chain
 from asyncio import gather, run, Semaphore, sleep
 from datetime import datetime
 from aiofiles import open
-from os import path, getcwd, utime, stat, devnull
+from os import path, getcwd, utime, stat
 from tqdm.asyncio import tqdm
 
-PARALLEL_LIMIT = 150
+PARALLEL_LIMIT = 300
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
@@ -18,7 +17,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-blog_list = ["risa-ogata"]
+# blog_list = ["risa-ogata"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
@@ -43,9 +42,8 @@ async def run_all() -> None:
 
     url_lists: list = list()
     for blog_name, count in zip(blog_list, list_pages_count):
-        url_lists.extend(
-            await gather(*[parse_list_page(blog_name, i, sem, session) for i in range(1, count + 1)],
-                         return_exceptions=True))
+        url_lists.extend(await tqdm.gather(*[parse_list_page(blog_name, i, sem, session) for i in range(1, count + 1)],
+                                           desc=blog_name))
 
     global url_list
     url_list = list(chain.from_iterable(url_lists))
@@ -54,7 +52,7 @@ async def run_all() -> None:
         if 'html' not in url:
             print(url)
 
-    image_links = await tqdm.gather(*[parse_image(url, sem, session) for url in url_list])
+    image_links = await tqdm.gather(*[parse_image(url, sem, session) for url in url_list], desc="scan blog")
     image_links = [i for i in image_links if type(i) is list]
     async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
         await f.write(str(image_links))
@@ -63,7 +61,8 @@ async def run_all() -> None:
     # pprint(image_link_package)
 
     await tqdm.gather(
-        *[download_image(filename, url, date, sem, session) for filename, url, date in image_link_package])
+        *[download_image(filename, url, date, sem, session) for filename, url, date in image_link_package],
+        desc="downloading images")
 
     await session.close()
 
@@ -117,6 +116,8 @@ async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[
     entry_body = parse.find('div', {'data-uranus-component': 'entryBody'})
     for span in entry_body.find_all('span'):
         span.decompose()
+    for emoji in entry_body.find_all('img', class_='emoji'):
+        emoji.decompose()
     image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
     return_list = list()
     for div in image_divs:
@@ -138,9 +139,8 @@ async def download_image(filename: str, url: str, date: datetime, sem: Semaphore
     async with sem:
         # print("download: ", url)
         async with session.get(url) as resp:
-            data = await resp.read()
-    async with open(file=filepath, mode="wb") as f:
-        await f.write(data)
+            async with open(file=filepath, mode="wb") as f:
+                await f.write(await resp.read())
     utime(path=filepath, times=(stat(path=filepath).st_atime, date.timestamp()))
 
 
