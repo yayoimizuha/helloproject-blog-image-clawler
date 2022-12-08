@@ -28,6 +28,7 @@ pandas = "*"
 aiohttp = "*"
 lxml = "*"
 aiofiles = "*"
+aiodns = "*"
 
 [dev-packages]
 autopep8 = "*"
