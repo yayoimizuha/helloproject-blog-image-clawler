@@ -1,3 +1,4 @@
+import queue as q
 import re
 import sys
 from bs4 import BeautifulSoup
@@ -8,10 +9,10 @@ from datetime import datetime
 from aiofiles import open
 from os import path, getcwd, utime, stat
 from tqdm.asyncio import tqdm
-from multiprocessing import Queue, Process, cpu_count, freeze_support, Event, Value
+from multiprocessing import Queue, Process, cpu_count, freeze_support, Event, Value, set_start_method
 from ctypes import c_bool
 
-PARALLEL_LIMIT = 300
+PARALLEL_LIMIT = 20
 QUEUE = Queue()
 RES_QUEUE = Queue()
 
@@ -42,14 +43,18 @@ def parse_image(html: str, url: str):
     return return_list
 
 
-def worker(queue: Queue, res_queue: Queue, i: int, fin_check: Value):
-    print("start process: {}".format(i))
-    while fin_check.value:
-        res = queue.get()
-        data = parse_image(*res)
-        res_queue.put(data)
-        print(fin_check.value)
-    print("finished")
+def worker(queue: Queue, res_queue: Queue, i: int, state: Value):
+    print("start process: {}".format(i), flush=True)
+    while True:
+        try:
+            res = queue.get(timeout=0.03)
+            data = parse_image(*res)
+            res_queue.put(data)
+        except q.Empty:
+            if not state.value:
+                break
+    print("finish process: {}".format(i), flush=True)
+    return 0
 
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
@@ -80,7 +85,6 @@ async def run_all() -> None:
                                     return_exceptions=True)
     for name, pages in zip(blog_list, list_pages_count):
         print(name, pages)
-
     url_lists: list = list()
     for blog_name, count in zip(blog_list, list_pages_count):
         url_lists.extend(await tqdm.gather(*[parse_list_page(blog_name, i, sem, session) for i in range(1, count + 1)],
@@ -92,12 +96,29 @@ async def run_all() -> None:
     for url in url_list:
         if 'html' not in url:
             print(url)
-    worker_state = Value(c_bool, True)
-    processes = [Process(target=worker, args=(QUEUE, RES_QUEUE, i, worker_state)) for i in range(3)]
+
+    state = Value(c_bool, True)
+    processes = [Process(target=worker, args=(QUEUE, RES_QUEUE, i, state)) for i in range(20)]
     for process in processes:
         process.start()
 
-    image_links = await tqdm.gather(*[parse_post_page(url, sem, session) for url in url_list], desc="scan blog")
+    await tqdm.gather(*[parse_post_page(url, sem, session) for url in url_list], desc="scan blog")
+
+    QUEUE.close()
+    state.value = False
+    for process in processes:
+        process.terminate()
+    image_links = list()
+    while True:
+        try:
+            a = RES_QUEUE.get(block=False)
+            print(a)
+            image_links.append(a)
+        except q.Empty as e:
+            print(e)
+            break
+    RES_QUEUE.close()
+
     image_links = [i for i in image_links if type(i) is list]
     async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
         await f.write(str(image_links))
@@ -110,9 +131,6 @@ async def run_all() -> None:
         desc="downloading images")
 
     await session.close()
-    worker_state = Value(c_bool, False)
-    for process in processes:
-        process.join()
 
 
 async def parse_list_pages_count(blog_name: str) -> int:
@@ -141,7 +159,7 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore, session: C
     return page_url_list
 
 
-async def parse_post_page(url: str, sem: Semaphore, session: ClientSession) -> list[tuple[str, str, datetime]]:
+async def parse_post_page(url: str, sem: Semaphore, session: ClientSession) -> None:
     while True:
         async with sem:
             try:
@@ -156,7 +174,8 @@ async def parse_post_page(url: str, sem: Semaphore, session: ClientSession) -> l
     # filename , url ,date
     # pprint(return_list)
     QUEUE.put((resp_html, url))
-    return parse_image(resp_html, url)
+    return
+    # return parse_image(resp_html, url)
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
