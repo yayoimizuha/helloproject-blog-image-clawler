@@ -8,8 +8,49 @@ from datetime import datetime
 from aiofiles import open
 from os import path, getcwd, utime, stat
 from tqdm.asyncio import tqdm
+from multiprocessing import Queue, Process, cpu_count, freeze_support, Event, Value
+from ctypes import c_bool
 
 PARALLEL_LIMIT = 300
+QUEUE = Queue()
+RES_QUEUE = Queue()
+
+
+def parse_image(html: str, url: str):
+    theme = grep_theme(html)
+    date = datetime.fromisoformat(grep_modified_time(html))
+    blog_account = url.split('/')[-2]
+    blog_entry = url.split('/')[-1].split('.')[0].removeprefix("entry-")
+    parse = BeautifulSoup(html, 'lxml')
+    #     debug_print(url_list.index(url), end='\t')
+    #     debug_print(theme + "　" * (8 - len(theme)), end='')
+    #     debug_print(date.date(), end='\t')
+    #     debug_print(parse.find('title').text)
+    entry_body = parse.find('div', {'data-uranus-component': 'entryBody'})
+    for span in entry_body.find_all('span'):
+        span.decompose()
+    for emoji in entry_body.find_all('img', class_='emoji'):
+        emoji.decompose()
+    image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
+    return_list = list()
+    for div in image_divs:
+        return_list.append((
+            '='.join([theme, blog_account, blog_entry]) + '-' + div["data-image-order"] + '.jpg',
+            str(div["src"]).split('?')[0],
+            date
+        ))
+    return return_list
+
+
+def worker(queue: Queue, res_queue: Queue, i: int, fin_check: Value):
+    print("start process: {}".format(i))
+    while fin_check.value:
+        res = queue.get()
+        data = parse_image(*res)
+        res_queue.put(data)
+        print(fin_check.value)
+    print("finished")
+
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
@@ -17,7 +58,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-# blog_list = ["risa-ogata"]
+blog_list = ["risa-ogata"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
@@ -51,8 +92,12 @@ async def run_all() -> None:
     for url in url_list:
         if 'html' not in url:
             print(url)
+    worker_state = Value(c_bool, True)
+    processes = [Process(target=worker, args=(QUEUE, RES_QUEUE, i, worker_state)) for i in range(3)]
+    for process in processes:
+        process.start()
 
-    image_links = await tqdm.gather(*[parse_image(url, sem, session) for url in url_list], desc="scan blog")
+    image_links = await tqdm.gather(*[parse_post_page(url, sem, session) for url in url_list], desc="scan blog")
     image_links = [i for i in image_links if type(i) is list]
     async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
         await f.write(str(image_links))
@@ -65,6 +110,9 @@ async def run_all() -> None:
         desc="downloading images")
 
     await session.close()
+    worker_state = Value(c_bool, False)
+    for process in processes:
+        process.join()
 
 
 async def parse_list_pages_count(blog_name: str) -> int:
@@ -93,7 +141,7 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore, session: C
     return page_url_list
 
 
-async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[tuple[str, str, datetime]]:
+async def parse_post_page(url: str, sem: Semaphore, session: ClientSession) -> list[tuple[str, str, datetime]]:
     while True:
         async with sem:
             try:
@@ -104,31 +152,11 @@ async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[
             except ClientConnectorError as e:
                 await sleep(5.0)
                 print(e, file=sys.stderr)
-    theme = grep_theme(resp_html)
-    date = datetime.fromisoformat(grep_modified_time(resp_html))
-    blog_account = url.split('/')[-2]
-    blog_entry = url.split('/')[-1].split('.')[0].removeprefix("entry-")
-    parse = BeautifulSoup(resp_html, 'lxml')
-    debug_print(url_list.index(url), end='\t')
-    debug_print(theme + "　" * (8 - len(theme)), end='')
-    debug_print(date.date(), end='\t')
-    debug_print(parse.find('title').text)
-    entry_body = parse.find('div', {'data-uranus-component': 'entryBody'})
-    for span in entry_body.find_all('span'):
-        span.decompose()
-    for emoji in entry_body.find_all('img', class_='emoji'):
-        emoji.decompose()
-    image_divs = entry_body.find_all('img', class_='PhotoSwipeImage')
-    return_list = list()
-    for div in image_divs:
-        return_list.append((
-            '='.join([theme, blog_account, blog_entry]) + '-' + div["data-image-order"] + '.jpg',
-            str(div["src"]).split('?')[0],
-            date
-        ))
+
     # filename , url ,date
     # pprint(return_list)
-    return return_list
+    QUEUE.put((resp_html, url))
+    return parse_image(resp_html, url)
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
@@ -158,4 +186,5 @@ def grep_modified_time(html: str) -> str:
     return str(modified_time_regex.search(html).group(1))
 
 
-run(run_all())
+if __name__ == '__main__':
+    run(run_all())
