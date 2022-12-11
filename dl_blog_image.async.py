@@ -63,7 +63,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-blog_list = ["risa-ogata"]
+# blog_list = ["risa-ogata"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
