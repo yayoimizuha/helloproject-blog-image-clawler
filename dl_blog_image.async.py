@@ -32,18 +32,18 @@ def debug_print(*print_str: object, end: str = '\n'):
         print(end)
 
 
-async def run_all() -> None:
+async def run_all(name: str) -> None:
     sem: Semaphore = Semaphore(PARALLEL_LIMIT)
     session: ClientSession = ClientSession(trust_env=True, headers=request_header)
-    list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
-                                    return_exceptions=True)
-    for name, pages in zip(blog_list, list_pages_count):
-        print(name, pages)
+    # list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
+    #                                 return_exceptions=True)
+    list_pages_count = await parse_list_pages_count(name)
 
-    url_lists: list = list()
-    for blog_name, count in zip(blog_list, list_pages_count):
-        url_lists.extend(await tqdm.gather(*[parse_list_page(blog_name, i, sem, session) for i in range(1, count + 1)],
-                                           desc=blog_name))
+    print(name, list_pages_count)
+
+    # for blog_name, count in zip(blog_list, list_pages_count):
+    url_lists = await tqdm.gather(*[parse_list_page(name, i, sem, session) for i in range(1, list_pages_count + 1)],
+                                  desc=name)
 
     global url_list
     url_list = list(chain.from_iterable(url_lists))
@@ -52,12 +52,13 @@ async def run_all() -> None:
         if 'html' not in url:
             print(url)
 
-    image_links = await tqdm.gather(*[parse_image(url, sem, session) for url in url_list], desc="scan blog")
-    image_links = [i for i in image_links if type(i) is list]
+    post_html = await tqdm.gather(*[parse_blog_post(url, sem, session) for url in url_list], desc="scan blog")
+    post_html = [i for i in post_html if type(i) is tuple]
     async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
-        await f.write(str(image_links))
-    # print(image_links)
-    image_link_package = list(chain.from_iterable(image_links))
+        await f.write(str(post_html))
+    # print(post_html)
+    images_list = [parse_image(html, url) for html, url in post_html]
+    image_link_package = list(chain.from_iterable(images_list))
     # pprint(image_link_package)
 
     await tqdm.gather(
@@ -93,22 +94,12 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore, session: C
     return page_url_list
 
 
-async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[tuple[str, str, datetime]]:
-    while True:
-        async with sem:
-            try:
-                async with session.get(url) as resp:
-                    resp_html = await resp.text()
-                    await sleep(1.0)
-                    break
-            except ClientConnectorError as e:
-                await sleep(5.0)
-                print(e, file=sys.stderr)
-    theme = grep_theme(resp_html)
-    date = datetime.fromisoformat(grep_modified_time(resp_html))
+def parse_image(html: str, url: str) -> list:
+    theme = grep_theme(html)
+    date = datetime.fromisoformat(grep_modified_time(html))
     blog_account = url.split('/')[-2]
     blog_entry = url.split('/')[-1].split('.')[0].removeprefix("entry-")
-    parse = BeautifulSoup(resp_html, 'lxml')
+    parse = BeautifulSoup(html, 'lxml')
     debug_print(url_list.index(url), end='\t')
     debug_print(theme + "　" * (8 - len(theme)), end='')
     debug_print(date.date(), end='\t')
@@ -126,9 +117,25 @@ async def parse_image(url: str, sem: Semaphore, session: ClientSession) -> list[
             str(div["src"]).split('?')[0],
             date
         ))
+    return return_list
+
+
+async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession) -> tuple[str, str]:
+    # -> list[tuple[str, str, datetime]]:
+    while True:
+        async with sem:
+            try:
+                async with session.get(url) as resp:
+                    resp_html = await resp.text()
+                    await sleep(1.0)
+                    break
+            except ClientConnectorError as e:
+                await sleep(5.0)
+                print(e, file=sys.stderr)
+
     # filename , url ,date
     # pprint(return_list)
-    return return_list
+    return resp_html, url
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
@@ -158,4 +165,5 @@ def grep_modified_time(html: str) -> str:
     return str(modified_time_regex.search(html).group(1))
 
 
-run(run_all())
+for name in blog_list:
+    run(run_all(name))
