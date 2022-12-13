@@ -1,3 +1,4 @@
+import queue as q
 import re
 import sys
 from bs4 import BeautifulSoup
@@ -10,7 +11,6 @@ from os import path, getcwd, utime, stat, cpu_count
 from tqdm.asyncio import tqdm
 from concurrent.futures import as_completed, ProcessPoolExecutor, Future
 
-PARALLEL_LIMIT = 300
 
 blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-official", "tsubaki-factory",
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
@@ -43,6 +43,7 @@ async def run_each(name: str) -> None:
     url_lists = await tqdm.gather(*[parse_list_page(name, i, sem, session) for i in range(1, list_pages_count + 1)],
                                   desc=name)
 
+
     url_list = list(chain.from_iterable(url_lists))
     # pprint.pprint(url_list)
     for url in url_list:
@@ -56,6 +57,7 @@ async def run_each(name: str) -> None:
         images_list.append(future.result())
     executor.shutdown()
     image_link_package = list(chain.from_iterable(images_list))
+
 
     await tqdm.gather(
         *[download_image(filename, url, date, sem, session) for filename, url, date in image_link_package],
@@ -117,6 +119,7 @@ def parse_image(html: str, url: str) -> list:
 
 async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession, executor: ProcessPoolExecutor) -> Future:
     # -> list[tuple[str, str, datetime]]:
+
     while True:
         async with sem:
             try:
@@ -131,6 +134,7 @@ async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession, exec
     # filename , url ,date
     # pprint(return_list)
     return executor.submit(parse_image, resp_html, url)
+
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
@@ -163,3 +167,4 @@ def grep_modified_time(html: str) -> str:
 if __name__ == '__main__':
     for name in blog_list:
         run(run_each(name))
+
