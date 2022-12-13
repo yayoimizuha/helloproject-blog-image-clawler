@@ -50,7 +50,7 @@ async def run_each(name: str) -> None:
     executor = ProcessPoolExecutor(max_workers=cpu_count())
     futures = await tqdm.gather(*[parse_blog_post(url, sem, session, executor) for url in url_list], desc="scan blog")
     images_list = list()
-    for future in tqdm(as_completed(futures), desc="waiting processing: " + name, total=len(futures)):
+    for future in tqdm(as_completed(futures), desc="waiting processing " + name, total=len(futures)):
         images_list.append(future.result())
     executor.shutdown()
     image_link_package = list(chain.from_iterable(images_list))
