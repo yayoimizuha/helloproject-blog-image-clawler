@@ -1,15 +1,14 @@
 import re
 import sys
 from bs4 import BeautifulSoup
-from aiohttp import ClientSession, ClientConnectorError
+from aiohttp import ClientSession, ClientConnectorError, ClientTimeout
 from itertools import chain
-from asyncio import gather, run, Semaphore, sleep, Queue
+from asyncio import run, Semaphore, sleep
 from datetime import datetime
 from aiofiles import open
-from os import path, getcwd, utime, stat
+from os import path, getcwd, utime, stat, cpu_count
 from tqdm.asyncio import tqdm
-from joblib import Parallel, delayed, cpu_count
-from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor, Future
 
 PARALLEL_LIMIT = 300
 
@@ -19,7 +18,7 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-# blog_list = ["risa-ogata", "ocha-norma"]
+# blog_list = ["juicejuice-official"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
@@ -32,11 +31,10 @@ def debug_print(*print_str: object, end: str = '\n'):
         print(end)
 
 
-async def run_all(name: str) -> None:
+async def run_each(name: str) -> None:
     sem: Semaphore = Semaphore(PARALLEL_LIMIT)
-    session: ClientSession = ClientSession(trust_env=True, headers=request_header)
-    # list_pages_count = await gather(*[parse_list_pages_count(blog_name=blog_name) for blog_name in blog_list],
-    #                                 return_exceptions=True)
+    session: ClientSession = ClientSession(trust_env=True, headers=request_header, timeout=ClientTimeout(total=10 * 60))
+
     list_pages_count = await parse_list_pages_count(name)
 
     print(name, list_pages_count)
@@ -51,23 +49,13 @@ async def run_all(name: str) -> None:
         if 'html' not in url:
             print(url)
 
-    post_html = await tqdm.gather(*[parse_blog_post(url, sem, session) for url in url_list], desc="scan blog")
-    post_html = [i for i in post_html if type(i) is tuple]
-    async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
-        await f.write(str(post_html))
-    # print(post_html)
-    # images_list = [parse_image(html, url) for html, url in post_html]
-    images_list = list()
     executor = ProcessPoolExecutor(max_workers=cpu_count())
-    futures = [executor.submit(parse_image, html, url) for html, url in post_html]
-    for future in tqdm(as_completed(futures), desc="process html " + name, total=len(futures)):
-        # print(future.result())
+    futures = await tqdm.gather(*[parse_blog_post(url, sem, session, executor) for url in url_list], desc="scan blog")
+    images_list = list()
+    for future in tqdm(as_completed(futures), desc="waiting processing: " + name, total=len(futures)):
         images_list.append(future.result())
     executor.shutdown()
-    # for html, url in tqdm(post_html, desc="parse image"):
-    #     images_list.append(parse_image(html, url))
     image_link_package = list(chain.from_iterable(images_list))
-    # pprint(image_link_package)
 
     await tqdm.gather(
         *[download_image(filename, url, date, sem, session) for filename, url, date in image_link_package],
@@ -127,7 +115,7 @@ def parse_image(html: str, url: str) -> list:
     return return_list
 
 
-async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession) -> tuple[str, str]:
+async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession, executor: ProcessPoolExecutor) -> Future:
     # -> list[tuple[str, str, datetime]]:
     while True:
         async with sem:
@@ -142,7 +130,7 @@ async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession) -> t
 
     # filename , url ,date
     # pprint(return_list)
-    return resp_html, url
+    return executor.submit(parse_image, resp_html, url)
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
@@ -174,4 +162,4 @@ def grep_modified_time(html: str) -> str:
 
 if __name__ == '__main__':
     for name in blog_list:
-        run(run_all(name))
+        run(run_each(name))
