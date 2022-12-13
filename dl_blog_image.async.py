@@ -1,4 +1,3 @@
-import queue as q
 import re
 import sys
 from bs4 import BeautifulSoup
@@ -90,9 +89,9 @@ async def parse_list_page(blog_name: str, order: int, sem: Semaphore, session: C
 
 
 def parse_image(html: str, url: str) -> list:
-    theme = grep_theme(html)
-    date = datetime.fromisoformat(grep_modified_time(html))
     blog_account = url.split('/')[-2]
+    theme = theme_curator(grep_theme(html), blog_account)
+    date = datetime.fromisoformat(grep_modified_time(html))
     blog_entry = url.split('/')[-1].split('.')[0].removeprefix("entry-")
     parse = BeautifulSoup(html, 'lxml')
     debug_print(theme + "　" * (8 - len(theme)), end='')
@@ -128,8 +127,6 @@ async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession, exec
                 await sleep(5.0)
                 print(e, file=sys.stderr)
 
-    # filename , url ,date
-    # pprint(return_list)
     return executor.submit(parse_image, resp_html, url)
 
 
@@ -158,6 +155,28 @@ def grep_theme(html: str) -> str:
 
 def grep_modified_time(html: str) -> str:
     return str(modified_time_regex.search(html).group(1))
+
+
+def theme_curator(theme: str, blog_id: str) -> str:
+    if theme == "":
+        theme = 'None'
+    elif 'risa-ogata' == blog_id:
+        theme = '小片リサ'
+    elif 'shimizu--saki' == blog_id:
+        theme = "清水佐紀"
+    elif 'kumai-yurina-blog' == blog_id:
+        theme = "熊井友理奈"
+    elif 'sudou-maasa-blog' == blog_id:
+        theme = "須藤茉麻"
+    elif 'sugaya-risako-blog' == blog_id:
+        theme = "菅谷梨沙子"
+    elif 'miyamotokarin-official' == blog_id:
+        theme = "宮本佳林"
+    elif 'sayumimichishige-blog' == blog_id:
+        theme = "道重さゆみ"
+    elif '梁川 奈々美' in theme:
+        theme = '梁川奈々美'
+    return theme
 
 
 if __name__ == '__main__':
