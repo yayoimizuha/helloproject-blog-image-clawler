@@ -3,11 +3,13 @@ import sys
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession, ClientConnectorError
 from itertools import chain
-from asyncio import gather, run, Semaphore, sleep
+from asyncio import gather, run, Semaphore, sleep, Queue
 from datetime import datetime
 from aiofiles import open
 from os import path, getcwd, utime, stat
 from tqdm.asyncio import tqdm
+from joblib import Parallel, delayed, cpu_count
+from concurrent.futures import as_completed, ProcessPoolExecutor, ThreadPoolExecutor
 
 PARALLEL_LIMIT = 300
 
@@ -17,13 +19,11 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
              "kobushi-factory", "sayumimichishige-blog"]
 
-# blog_list = ["risa-ogata"]
+# blog_list = ["risa-ogata", "ocha-norma"]
 
 request_header = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
 }
-
-url_list: list = list()
 
 
 def debug_print(*print_str: object, end: str = '\n'):
@@ -45,7 +45,6 @@ async def run_all(name: str) -> None:
     url_lists = await tqdm.gather(*[parse_list_page(name, i, sem, session) for i in range(1, list_pages_count + 1)],
                                   desc=name)
 
-    global url_list
     url_list = list(chain.from_iterable(url_lists))
     # pprint.pprint(url_list)
     for url in url_list:
@@ -57,7 +56,16 @@ async def run_all(name: str) -> None:
     async with open(file=path.join(getcwd(), "log.log"), mode="w", encoding='utf-8') as f:
         await f.write(str(post_html))
     # print(post_html)
-    images_list = [parse_image(html, url) for html, url in post_html]
+    # images_list = [parse_image(html, url) for html, url in post_html]
+    images_list = list()
+    executor = ProcessPoolExecutor(max_workers=cpu_count())
+    futures = [executor.submit(parse_image, html, url) for html, url in post_html]
+    for future in tqdm(as_completed(futures), desc="process html " + name, total=len(futures)):
+        # print(future.result())
+        images_list.append(future.result())
+    executor.shutdown()
+    # for html, url in tqdm(post_html, desc="parse image"):
+    #     images_list.append(parse_image(html, url))
     image_link_package = list(chain.from_iterable(images_list))
     # pprint(image_link_package)
 
@@ -100,7 +108,6 @@ def parse_image(html: str, url: str) -> list:
     blog_account = url.split('/')[-2]
     blog_entry = url.split('/')[-1].split('.')[0].removeprefix("entry-")
     parse = BeautifulSoup(html, 'lxml')
-    debug_print(url_list.index(url), end='\t')
     debug_print(theme + "　" * (8 - len(theme)), end='')
     debug_print(date.date(), end='\t')
     debug_print(parse.find('title').text)
@@ -165,5 +172,6 @@ def grep_modified_time(html: str) -> str:
     return str(modified_time_regex.search(html).group(1))
 
 
-for name in blog_list:
-    run(run_all(name))
+if __name__ == '__main__':
+    for name in blog_list:
+        run(run_all(name))
