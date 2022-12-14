@@ -107,6 +107,6 @@ def cut_out_face(image_path):
     # print("\n\n\n\n\n")
 
 
-joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
+joblib.Parallel(n_jobs=os.cpu_count())(joblib.delayed(cut_out_face)(image_path) for image_path in images)
 
 print(str(time.time() - now_time) + " sec")
