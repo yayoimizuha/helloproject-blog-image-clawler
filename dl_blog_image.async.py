@@ -131,7 +131,7 @@ async def parse_blog_post(url: str, sem: Semaphore, session: ClientSession, exec
 
 
 async def download_image(filename: str, url: str, date: datetime, sem: Semaphore, session: ClientSession) -> None:
-    filepath = path.join(getcwd(), "dl_await", filename)
+    filepath = path.join(getcwd(), "images", filename)
     if path.isfile(filepath):
         # print(f"file already downloaded.: {filename}")
         return
