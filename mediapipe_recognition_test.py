@@ -9,7 +9,7 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 
-def mediapipe_face_detect(image, confidence, resolution):
+def mediapipe_face_detect(image, confidence, ret_res):
     with mp_face_detection.FaceDetection(
             model_selection=0, min_detection_confidence=confidence) as face_detection:
         # try:
@@ -48,7 +48,7 @@ def mediapipe_face_detect(image, confidence, resolution):
                 int(mp_face_detection.get_key_point(
                     detection=detection, key_point_enum=mp_face_detection.FaceKeyPoint.MOUTH_CENTER).y * height)
             )
-            #print(LEFT_EYE, RIGHT_EYE, MOUTH)
+            # print(LEFT_EYE, RIGHT_EYE, MOUTH)
             # for pos in [LEFT_EYE, RIGHT_EYE, MOUTH]:
             #    cv2.drawMarker(annotated_image, position=pos, color=(255, 0, 0), markerType=cv2.MARKER_DIAMOND,
             #                   thickness=3)
@@ -57,7 +57,7 @@ def mediapipe_face_detect(image, confidence, resolution):
             dx = (LEFT_EYE[0] + RIGHT_EYE[0]) / 2 - MOUTH[0]
             dy = (LEFT_EYE[1] + RIGHT_EYE[1]) / 2 - MOUTH[1]
             angle = math.degrees(math.fmod(math.pi + math.atan2(dx, dy), math.pi * 2))
-            #print(idy, dx, dy, angle)
+            # print(idy, dx, dy, angle)
             CENTER = (((LEFT_EYE[0] + RIGHT_EYE[0]) * 1.3 + MOUTH[0] * 0) / 2.6,
                       ((LEFT_EYE[1] + RIGHT_EYE[1]) * 1.3 + MOUTH[1] * 0) / 2.6)
             ELLIPSIS_SIZE = (
@@ -65,8 +65,8 @@ def mediapipe_face_detect(image, confidence, resolution):
                 int(math.sqrt(((LEFT_EYE[0] + RIGHT_EYE[0]) / 2 - MOUTH[0]) ** 2 +
                               ((LEFT_EYE[1] + RIGHT_EYE[1]) / 2 - MOUTH[1]) ** 2) * 3))
             # cv2.ellipse(annotated_image, (CENTER, ELLIPSIS_SIZE, 180 - angle), color=(0, 0, 255), thickness=3)
-            #print(CENTER)
-            #print(ELLIPSIS_SIZE)
+            # print(CENTER)
+            # print(ELLIPSIS_SIZE)
             affineFunc = cv2.getRotationMatrix2D(CENTER, 360 - angle, scale=1)
             rot = cv2.warpAffine(image, affineFunc, (width, height), borderValue=(255, 255, 255))
             rot_trim = rot[max(int(CENTER[1] - ELLIPSIS_SIZE[1] / 1.7), 0):
@@ -83,7 +83,7 @@ def mediapipe_face_detect(image, confidence, resolution):
             else:
                 fixed_rot = Image.fromarray(rot_trim)
 
-            rot_trim = cv2.resize(numpy.array(fixed_rot), (resolution, resolution), interpolation=cv2.INTER_LANCZOS4)
+            rot_trim = cv2.resize(numpy.array(fixed_rot), (ret_res, ret_res), interpolation=cv2.INTER_LANCZOS4)
             # cv2.imshow("rotate" + str(idy), rot_trim)
             return_array.append(cv2.cvtColor(rot_trim, cv2.COLOR_BGR2RGB))
             # cv2.waitKey(0)

@@ -174,7 +174,7 @@ def theme_curator(theme: str, blog_id: str) -> str:
         theme = "宮本佳林"
     elif 'sayumimichishige-blog' == blog_id:
         theme = "道重さゆみ"
-    elif '梁川 奈々美' in theme:
+    elif '梁川 奈々美' == theme:
         theme = '梁川奈々美'
     return theme
 
