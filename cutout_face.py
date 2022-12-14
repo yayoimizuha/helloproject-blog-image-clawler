@@ -63,12 +63,12 @@ for tag in tags:
 
 def cut_out_face(image_path):
     face_array_1 = mediapipe_recognition_test.mediapipe_face_detect(
-        cv2.cvtColor(numpy.array(Image.open(image_path)), cv2.COLOR_RGB2BGR), 0.7)
+        cv2.cvtColor(numpy.array(Image.open(image_path)), cv2.COLOR_RGB2BGR), 0.7, 300)
     face_arrays = []
     if not face_array_1:
         return
     for face_array in face_array_1:
-        recalc = mediapipe_recognition_test.mediapipe_face_detect(cv2.cvtColor(face_array, cv2.COLOR_RGB2BGR), 0.8)
+        recalc = mediapipe_recognition_test.mediapipe_face_detect(cv2.cvtColor(face_array, cv2.COLOR_RGB2BGR), 0.8, 224)
         if recalc:
             face_arrays.append(recalc[0])
     print(image_path)
@@ -95,16 +95,16 @@ def cut_out_face(image_path):
         os.utime(path=filename, times=(last_write_time, last_write_time))
 
         image_order += 1
-        print("image order " + str(image_order))
+        # print("image order " + str(image_order))
     if image_order == 0:
-        print("image order " + str(image_order))
+        # print("image order " + str(image_order))
         filename_no_face = os.path.join(os.getcwd(), 'face_dataset', 'no_face',
                                         str(os.path.splitext(os.path.basename(image_path))[0]) + '-' +
                                         str(image_order) + '.jpg')
 
-        print("no_face" + filename_no_face)
+        # print("no_face" + filename_no_face)
         pathlib.Path(filename_no_face).touch()
-    print("\n\n\n\n\n")
+    # print("\n\n\n\n\n")
 
 
 joblib.Parallel(n_jobs=N_JOBS)(joblib.delayed(cut_out_face)(image_path) for image_path in images)
