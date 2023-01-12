@@ -1,79 +1,90 @@
-import cv2
-import numpy as np
-import os
-import re
-import matplotlib.pyplot as plt
-from keras.utils.np_utils import to_categorical
-from keras.layers import Activation, Dense, Dropout, Flatten, Input
-from keras.models import Sequential, Model
-from sklearn.model_selection import train_test_split
-from keras.applications.vgg19 import VGG19
-from keras.preprocessing.image import image_utils
+from keras.layers import Dense, Input, GlobalAveragePooling2D, Dropout, Flatten, Activation
+from keras.optimizers import Adam, SGD
+# from keras.applications.vgg16 import VGG16, preprocess_input
+# from keras.applications.vgg19 import VGG19, preprocess_input
+from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import TensorBoard
+from keras.models import Model
+from os import getcwd, path
+from keras_vggface.utils import preprocess_input
+from keras_vggface import VGGFace
+from datetime import datetime
 
-members = os.listdir("sample_set")
-print(members)
-member_base_dir = "sample_set"
-n_category = len(members)
+TRAIN_PATH = path.join(getcwd(), "dataset", "train")
+VALID_PATH = path.join(getcwd(), "dataset", "valid")
 
-# 訓練データ
-X_train = []
-y_train = []
-for i, member in enumerate(members):
-    member_dir = member_base_dir + '/' + member + '/'
-    for filename in os.listdir(member_dir):
-        if not re.match('.+.jpg', filename):
-            continue
-        filepath = member_dir + filename
-        img = image_utils.img_to_array(image_utils.load_img(filepath, target_size=(64, 64)))
-        X_train.append(img)
-        y_train.append(i)
+NOW = datetime.now()
 
-X_train = np.asarray(X_train).astype('float32') / 255.0
-y_train = to_categorical(y_train, n_category)
-X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
-print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+num_classes = 99
+batch_size = 16
+epochs = 50
+hidden_dim = 512
 
-# モデルの定義: VGG19モデル
-input_tensor = Input(shape=(64, 64, 3))
-vgg19_model = VGG19(include_top=False, weights='imagenet', input_tensor=input_tensor)
+train_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,
+                                   rotation_range=20,
+                                   horizontal_flip=True,
+                                   height_shift_range=0.2,
+                                   width_shift_range=0.2,
+                                   zoom_range=0.2,
+                                   brightness_range=[0.7, 1.0])
+train_generator = train_datagen.flow_from_directory(
+    TRAIN_PATH,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=False
+)
 
-top_model = Sequential()
-top_model.add(Flatten(input_shape=vgg19_model.output_shape[1:]))
-top_model.add(Dense(256))
-top_model.add(Activation("sigmoid"))
-top_model.add(Dropout(0.5))
-top_model.add(Dense(128))
-top_model.add(Activation('sigmoid'))
-top_model.add(Dense(n_category))
-top_model.add(Activation("softmax"))
+valid_datagen = ImageDataGenerator(preprocessing_function=preprocess_input,
+                                   rotation_range=20,
+                                   horizontal_flip=True,
+                                   height_shift_range=0.2,
+                                   width_shift_range=0.2,
+                                   zoom_range=0.2,
+                                   brightness_range=[0.7, 1.0])
+valid_generator = valid_datagen.flow_from_directory(
+    VALID_PATH,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=False
+)
 
-model = Model(input=vgg19_model.input, output=top_model(vgg19_model.output))
+print(train_generator.class_indices)
+print(valid_generator.class_indices)
+input_tensor = Input(shape=(224, 224, 3))
+vgg16_model = VGGFace(
+    include_top=False,
+    #   weights='imagenet',
+    input_tensor=input_tensor
+)
 
-for layer in model.layers[:17]:
+for layer in vgg16_model.layers[:15]:
     layer.trainable = False
 
-model.compile(loss='categorical_crossentropy',
-              optimizer='sgd',
-              metrics=['accuracy'])
+x = vgg16_model.get_layer('pool5').output
+x = Flatten(name='flatten')(x)
+x = Dense(hidden_dim, activation='relu', name='fc6')(x)
+x = Dense(hidden_dim, activation='relu', name='fc7')(x)
+predictions = Dense(num_classes, activation='softmax', name='classifier')(x)
+
+model = Model(inputs=vgg16_model.inputs, outputs=predictions)
+tb_cb = TensorBoard(log_dir=path.join(getcwd(), "tf_log", NOW.__str__()), histogram_freq=1)
+
+optimizer = Adam(learning_rate=0.0001)
+model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+
 model.summary()
 
-# 学習
-history = model.fit(X_train, y_train, batch_size=100, epochs=50, verbose=1, validation_data=(X_test, y_test))
+for i in model.layers:
+    print(i.name, i.trainable)
 
-# モデルを保存
-model.save("hello_vgg_all.h5")
-model_json = model.to_json()
-open('hello_vgg.json', 'w').write(model_json)
-model.save_weights("hello_vgg.h5")
+history = model.fit(
+    train_generator,
+    validation_data=valid_generator,
+    epochs=epochs,
+    batch_size=batch_size,
+    callbacks=[tb_cb]
+)
 
-# 汎化制度の評価・表示
-score = model.evaluate(X_test, y_test, batch_size=32, verbose=0)
-print('validation loss:{0[0]}\nvalidation accuracy:{0[1]}'.format(score))
-
-# acc, val_accのプロット
-plt.plot(history.history["acc"], label="acc", ls="-", marker="o")
-plt.plot(history.history["val_acc"], label="val_acc", ls="-", marker="x")
-plt.ylabel("accuracy")
-plt.xlabel("epoch")
-plt.legend(loc="best")
-plt.show()
+model.save(path.join(getcwd(), "models", NOW.__str__() + "hello.h5"))
