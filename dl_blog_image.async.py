@@ -15,7 +15,8 @@ blog_list = ["angerme-ss-shin", "angerme-amerika", "angerme-new", "juicejuice-of
              "morningmusume-10ki", "morningm-13ki", "morningmusume15ki", "morningmusume-9ki", "beyooooonds-rfro",
              "beyooooonds-chicatetsu", "beyooooonds", "ocha-norma", "countrygirls", "risa-ogata",  # "shimizu--saki",
              "kumai-yurina-blog", "sudou-maasa-blog", "sugaya-risako-blog", "miyamotokarin-official",
-             "kobushi-factory", "sayumimichishige-blog"]
+             "kobushi-factory", "sayumimichishige-blog", "kudo--haruka", "airisuzuki-officialblog",
+             "angerme-ayakawada"]
 
 # blog_list = ["juicejuice-official"]
 
@@ -174,6 +175,12 @@ def theme_curator(theme: str, blog_id: str) -> str:
         theme = "宮本佳林"
     elif 'sayumimichishige-blog' == blog_id:
         theme = "道重さゆみ"
+    elif 'kudo--haruka' == blog_id:
+        theme = "工藤遥"
+    elif 'airisuzuki-officialblog' == blog_id:
+        theme = "鈴木愛理"
+    elif 'angerme-ayakawada' == blog_id:
+        theme = "和田彩花"
     elif '梁川 奈々美' == theme:
         theme = '梁川奈々美'
     return theme

@@ -1,14 +1,10 @@
-import math
-import operator
 import pprint
 import time
-
 import cudf
 import h5py
 import os.path
 import shutil
-import sys
-from cuml import UMAP, PCA, TSNE
+from cuml import UMAP, PCA
 from cuml.neighbors import NearestNeighbors
 
 [os.remove(os.path.join(os.getcwd(), "topK", f)) for f in os.listdir(os.path.join(os.getcwd(), "topK"))]
@@ -51,7 +47,7 @@ while True:
     #     sort_list.append((i, math.dist(search_embeddings, reduced_embedding)))
     # print("sort")
     # sorted_list = sorted(sort_list, key=operator.itemgetter(1))
-    KNN = NearestNeighbors(n_neighbors=150, algorithm="brute", metric="manhattan").fit(last_reduced)
+    KNN = NearestNeighbors(n_neighbors=50, algorithm="brute", metric="manhattan").fit(last_reduced)
     X_cudf = cudf.DataFrame(last_reduced[search_key].reshape(1, -1))
     distances, indices = KNN.kneighbors(X_cudf)
     print(time.time() - start_time)
@@ -76,7 +72,7 @@ while True:
 
         try:
             shutil.copyfile(os.path.join(os.getcwd(), "face_dataset", filename.split('=')[0], filename),
-                            os.path.join(os.getcwd(), "topK", str(order) + '-' + filename))
+                            os.path.join(os.getcwd(), "topK", filename))
         except FileNotFoundError as e:
             print(e)
     pprint.pprint(sorted(person_list.items(), key=lambda x: -x[1])[:10])
