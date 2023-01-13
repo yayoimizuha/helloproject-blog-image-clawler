@@ -1,5 +1,6 @@
 from keras.layers import Dense, Input, GlobalAveragePooling2D, Dropout, Flatten, Activation
 from keras.optimizers import Adam, SGD
+from keras.activations import relu, sigmoid, softmax
 # from keras.applications.vgg16 import VGG16, preprocess_input
 # from keras.applications.vgg19 import VGG19, preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
@@ -59,14 +60,20 @@ vgg16_model = VGGFace(
     input_tensor=input_tensor
 )
 
-for layer in vgg16_model.layers[:15]:
+for layer in vgg16_model.layers[:17]:
     layer.trainable = False
 
-x = vgg16_model.get_layer('pool5').output
-x = Flatten(name='flatten')(x)
-x = Dense(hidden_dim, activation='relu', name='fc6')(x)
-x = Dense(hidden_dim, activation='relu', name='fc7')(x)
-predictions = Dense(num_classes, activation='softmax', name='classifier')(x)
+# x = vgg16_model.output
+# x = GlobalAveragePooling2D()(x)
+# x = Dense(hidden_dim, activation='relu', name='fc6')(x)
+# # x = Dense(hidden_dim, activation='relu', name='fc7')(x)
+# x = Dropout(0.5)(x)
+# predictions = Dense(num_classes, activation='softmax', name='classifier')(x)
+last_layer = vgg16_model.get_layer('pool5').output
+x = Flatten(name='flatten')(last_layer)
+x = Dense(hidden_dim, activation=relu, name='fc6')(x)
+x = Dense(hidden_dim, activation=relu, name='fc7')(x)
+predictions = Dense(num_classes, activation=softmax, name='fc8')(x)
 
 model = Model(inputs=vgg16_model.inputs, outputs=predictions)
 tb_cb = TensorBoard(log_dir=path.join(getcwd(), "tf_log", NOW.__str__()), histogram_freq=1)
