@@ -58,10 +58,11 @@ input_tensor = Input(shape=(224, 224, 3))
 vgg16_model = VGGFace(
     include_top=False,
     #   weights='imagenet',
+    model='resnet50',
     input_tensor=input_tensor
 )
 
-for layer in vgg16_model.layers[:17]:
+for layer in vgg16_model.layers:
     layer.trainable = False
 
 # x = vgg16_model.output
@@ -70,12 +71,17 @@ for layer in vgg16_model.layers[:17]:
 # # x = Dense(hidden_dim, activation='relu', name='fc7')(x)
 # x = Dropout(0.5)(x)
 # predictions = Dense(num_classes, activation='softmax', name='classifier')(x)
-last_layer = vgg16_model.get_layer('pool5').output
-x = Flatten()(last_layer)
-x = Dense(hidden_dim, activation=sigmoid, name='fc6')(x)
-x = Dropout(0.2)(x)
-x = Dense(hidden_dim, activation=sigmoid, name='fc7')(x)
-predictions = Dense(num_classes, activation=softmax, name='fc8')(x)
+
+
+# last_layer = vgg16_model.get_layer('pool5').output
+# x = Flatten()(last_layer)
+# x = Dense(hidden_dim, activation=sigmoid, name='fc6')(x)
+# x = Dropout(0.2)(x)
+# x = Dense(hidden_dim, activation=sigmoid, name='fc7')(x)
+last_layer = vgg16_model.get_layer('avg_pool').output
+x = Flatten(name='flatten')(last_layer)
+x = Dropout(0.4)(x)
+predictions = Dense(num_classes, activation=softmax, name='classifier')(x)
 
 model = Model(inputs=vgg16_model.inputs, outputs=predictions)
 tb_cb = TensorBoard(log_dir=path.join(getcwd(), "tf_log", NOW.__str__()), histogram_freq=1)

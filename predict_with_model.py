@@ -4,7 +4,7 @@ from keras.preprocessing.image import image_utils
 from shutil import copyfile
 from numpy import vstack
 
-model: Model = load_model(path.join(getcwd(), "models", "2023-01-14 20:51:30.516575hello.h5"))
+model: Model = load_model(path.join(getcwd(), "models", "2023-01-15 12:13:58.165751hello.h5"))
 model.summary()
 
 images_name = list()
