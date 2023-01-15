@@ -27,3 +27,4 @@ embeddings.hdf5
 topK
 dl_await
 /dataset/
+/predicted/

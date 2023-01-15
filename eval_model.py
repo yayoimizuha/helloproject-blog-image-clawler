@@ -1,4 +1,4 @@
-from keras.models import load_model
+from keras.models import load_model, Model
 from os import path, getcwd, listdir
 from keras.preprocessing.image import image_utils
 from sys import argv
@@ -8,7 +8,8 @@ if argv.__len__() != 2:
 if not path.isfile(argv[1]):
     exit(1)
 
-model = load_model(path.join(getcwd(), "hello_keras-vggface.h5"))
+model: Model = load_model(path.join(getcwd(), "models", "2023-01-14 14:23:17.353263hello.h5"))
+model.summary()
 image = image_utils.img_to_array(image_utils.load_img(argv[1], target_size=(224, 224, 3)))
 
 image_nad = image_utils.img_to_array(image) / 255
@@ -32,4 +33,11 @@ labels: dict = {'一岡伶奈': 0, '上國料萌衣': 1, '中山夏月姫': 2, '
                 '西﨑美空': 84, '譜久村聖': 85, '谷本安美': 86, '豫風瑠乃': 87, '道重さゆみ': 88, '遠藤彩加里': 89,
                 '里吉うたの': 90, '野村みな美': 91, '金澤朋子': 92, '鈴木香音': 93, '鞘師里保': 94, '須藤茉麻': 95,
                 '飯窪春菜': 96, '高木紗友希': 97, '高瀬くるみ': 98}
+
 print(labels.keys())
+
+ans = model.predict(image_nad)
+print(ans)
+eve = {key: val for key, val in zip(labels, ans[0])}
+print(eve)
+print(sorted(eve.items(), key=lambda acc: acc[1])[80:])
