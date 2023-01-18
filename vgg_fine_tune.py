@@ -86,7 +86,8 @@ predictions = Dense(num_classes, activation=softmax, name='classifier')(x)
 model = Model(inputs=vgg16_model.inputs, outputs=predictions)
 tb_cb = TensorBoard(log_dir=path.join(getcwd(), "tf_log", NOW.__str__()), histogram_freq=1)
 
-optimizer = Adam(learning_rate=0.0001)
+# optimizer = Adam(learning_rate=0.0001)
+optimizer = SGD(learning_rate=0.0001, momentum=0.9)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
 model.summary()

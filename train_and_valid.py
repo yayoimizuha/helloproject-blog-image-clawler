@@ -2,6 +2,7 @@ from os import listdir, getcwd, path, makedirs
 from random import randint
 from shutil import copyfile
 
+
 dirlist = listdir("dataset")
 print(dirlist)
 makedirs(path.join(getcwd(), "dataset", "train"), exist_ok=True)
