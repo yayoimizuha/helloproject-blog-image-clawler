@@ -10,6 +10,8 @@ model.summary()
 images_name = list()
 face_dir = listdir(path.join(getcwd(), "face_dataset"))
 for directory in face_dir:
+    if directory == "no_face":
+        continue
     for image in listdir(path.join(getcwd(), "face_dataset", directory)):
         images_name.append([directory, image])
 

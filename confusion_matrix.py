@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from japanize_matplotlib import japanize, fonts
 
 variety = "valid"
-model: Model = load_model(path.join(getcwd(), "models", "2023-01-15 12:13:58.165751hello.h5"))
+model: Model = load_model(path.join(getcwd(), "models", "2023-01-19 06:49:13.239003hello.h5"))
 acc = loss = 0
 images_name = list()
 face_dir = listdir(path.join(getcwd(), "dataset", variety))
@@ -41,4 +41,3 @@ plt.rcParams["font.size"] = 4
 heatmap(confusion_matrix, annot=False, square=True, cmap='Blues', xticklabels=1, yticklabels=1, annot_kws={"size": 4})
 plt.savefig('confusion_matrix.png')
 print(f"acc:{acc},loss:{loss},percent:{acc / (loss + acc)}")
-

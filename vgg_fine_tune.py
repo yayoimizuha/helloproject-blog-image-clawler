@@ -81,6 +81,7 @@ for layer in vgg16_model.layers:
 last_layer = vgg16_model.get_layer('avg_pool').output
 x = Flatten(name='flatten')(last_layer)
 x = Dropout(0.4)(x)
+x = Dense(hidden_dim)(x)
 predictions = Dense(num_classes, activation=softmax, name='classifier')(x)
 
 model = Model(inputs=vgg16_model.inputs, outputs=predictions)
